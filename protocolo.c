@@ -3,21 +3,18 @@
 
 #include "protocolo.h"
 
-#define BIT5MASK 0x1F
-#define BIT6MASK 0x3F
-
 static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
-    uint8_t crc = 0x00; // Valor inicial
-    uint8_t polinomio = 0x07; // Polinômio gerador
+    uint8_t crc = 0x00;
+    uint8_t polinomio = 0x07;
 
-    for (size_t i = 0; i < tamanho; i++) {
-        crc ^= dados[i]; // Faz o XOR do byte atual com o CRC
+    for(size_t i = 0; i < tamanho; i++) {
+        crc ^= dados[i];
 
-        // Para cada um dos 8 bits do byte
-        for (int j = 0; j < 8; j++) {
-            if (crc & 0x80) { // Se o bit mais à esquerda for 1
+        for(size_t j = 0; j < 8; j++) {
+            if(crc & 0x80) {
                 crc = (crc << 1) ^ polinomio;
-            } else {
+            } 
+            else {
                 crc <<= 1;
             }
         }
@@ -35,12 +32,25 @@ int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, u
     if(tipo > 31)
         return 1;
 
+    memset(pacote, 0, sizeof(struct pacote));
+
     pacote->marcador = MARCADOR;
-    pacote->tamanho = tamanho & BIT5MASK;
-    pacote->sequencia = sequencia & 0x3F;
+    pacote->tamanho = tamanho;
+    pacote->sequencia = sequencia;
     pacote->tipo = tipo;
-    memcpy(pacote->dados, dados, tamanho);
+    if(dados != NULL)
+        memcpy(pacote->dados, dados, tamanho);
     pacote->crc = calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1);
+
+    return 0;
+}
+
+// Retorna 0 se forem iguais
+// Retorna 1 se forem diferentes
+int compara_crc(struct pacote *pacote)
+{
+    if(calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1) != pacote->crc)
+        return 1;
 
     return 0;
 }

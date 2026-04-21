@@ -34,4 +34,8 @@ enum tipos_pacote {
 
 int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, uint8_t tipo, const uint8_t *dados);
 
+// Retorna 0 se forem iguais
+// Retorna 1 se forem diferentes
+int compara_crc(struct pacote *pacote);
+
 #endif
