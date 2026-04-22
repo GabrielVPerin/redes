@@ -2,10 +2,9 @@
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "rede.h"
@@ -54,14 +53,14 @@ void rede_envia(struct pacote *pacote, int soquete)
 
     while(1) {
         if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
-            fprintf(stderr, "Erro ao usar send: %s\n", strerror(errno));
+            perror("Erro ao usar send");
             exit(1);
         }
 
         while(1) {
             do {
                 if(recv(soquete, &resposta, sizeof(struct pacote), 0) == -1) {
-                    fprintf(stderr, "Erro ao usar recv: %s\n", strerror(errno));
+                    perror("Erro ao usar recv");
                     exit(1);
                 }
             } while(resposta.marcador != MARCADOR);
@@ -78,44 +77,39 @@ void rede_envia(struct pacote *pacote, int soquete)
     }
 }
 
+static void rede_envia_mensagem(int soquete, uint8_t codigo)
+{
+    struct pacote mensagem;
+
+    if(constroi_pacote(&mensagem, 0, 0, codigo, NULL)) {
+        fprintf(stderr, "Erro ao construir pacote");
+        exit(1);
+    }
+
+    if(send(soquete, &mensagem, sizeof(struct pacote), 0) == -1) {
+        perror("Erro ao usar send");
+        exit(1);
+    }
+
+}
+
 void rede_escuta(struct pacote *pacote, int soquete)
 {
-    struct pacote resposta;
-
     while(1) {
         do {
             if(recv(soquete, pacote, sizeof(struct pacote), 0) == -1) {
-                fprintf(stderr, "Erro ao usar recv: %s\n", strerror(errno));
+                perror("Erro ao usar recv");
                 exit(1);
             }
         } while(pacote->marcador != MARCADOR);
 
         if(compara_crc(pacote)) {
-            if(constroi_pacote(&resposta, 0, 0, TIPO_NACK, NULL)) {
-                fprintf(stderr, "Erro ao construir pacote NACK");
-                exit(1);
-            }
-
-            if(send(soquete, &resposta, sizeof(struct pacote), 0) == -1) {
-                fprintf(stderr, "Erro ao usar send: %s\n", strerror(errno));
-                exit(1);
-            }
+            rede_envia_mensagem(soquete, TIPO_NACK);
         }
         else {
-            if(pacote->tipo == TIPO_ACK || pacote->tipo == TIPO_NACK)
-                break;
+            rede_envia_mensagem(soquete, TIPO_ACK);
 
-            if(constroi_pacote(&resposta, 0, 0, TIPO_ACK, NULL)) {
-                fprintf(stderr, "Erro ao construir pacote ACK");
-                exit(1);
-            }
-
-            if(send(soquete, &resposta, sizeof(struct pacote), 0) == -1) {
-                fprintf(stderr, "Erro ao usar send: %s\n", strerror(errno));
-                exit(1);
-            }
-
-            break;
+            return;
         }
 
     }
