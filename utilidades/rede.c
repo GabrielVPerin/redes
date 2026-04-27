@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "rede.h"
-#include "protocolo.h"
+#include <rede.h>
+#include <protocolo.h>
  
 int cria_raw_socket(char *nome_interface_rede) 
 {

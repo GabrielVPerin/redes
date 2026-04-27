@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <memory.h>
 
-#include "protocolo.h"
+#include <protocolo.h>
 
 static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
     uint8_t crc = 0x00;

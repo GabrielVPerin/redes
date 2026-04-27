@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "protocolo.h"
-#include "rede.h"
+#include <protocolo.h>
+#include <rede.h>
  
 int main()
 {

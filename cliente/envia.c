@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <sys/unistd.h>
 
-#include "protocolo.h"
-#include "rede.h"
+#include <protocolo.h>
+#include <rede.h>
 
 int main()
 {

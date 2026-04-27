@@ -1,7 +1,7 @@
 #ifndef REDE_H
 #define REDE_H
 
-#include "protocolo.h"
+#include <protocolo.h>
 
 int cria_raw_socket(char *nome_interface_rede);
 
