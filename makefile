@@ -10,7 +10,7 @@ CLIENTE_SRC = $(wildcard $(CLIENTE_DIR)/*.c)
 SERVER_SRC = $(wildcard $(SERVER_DIR)/*.c)
 
 UTILS_OBJ = $(UTILS_SRC:.c=.o)
-CLIENTE_OBJ = $(CLIENT_SRC:.c=.o)
+CLIENTE_OBJ = $(CLIENTE_SRC:.c=.o)
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 
 CLIENTE_BIN = envia
