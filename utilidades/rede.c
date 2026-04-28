@@ -1,4 +1,6 @@
 #include <arpa/inet.h>
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
@@ -6,9 +8,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <errno.h>
 
 #include <rede.h>
 #include <protocolo.h>
+
+static size_t timestamp()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+
+    return tp.tv_sec*1000 + tp.tv_usec/1000;
+}
  
 int cria_raw_socket(char *nome_interface_rede) 
 {
@@ -44,33 +56,51 @@ int cria_raw_socket(char *nome_interface_rede)
     return soquete;
 }
 
-// TODO: Talvez send pode enviar pacotes parciais
-// TODO: Timeout
+// TODO: Tempo de timeout aumentar
+// Devo checar crc dos pacotes de ACK e NACK?
 
 void rede_envia(struct pacote *pacote, int soquete)
 {
     struct pacote resposta;
+    int ret;
+    size_t timeoutMilis = 900;
+    size_t comeco;
+    struct timeval timeout = { .tv_sec = timeoutMilis/1000, .tv_usec = (timeoutMilis % 1000) * 1000 };
+    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
 
     while(1) {
-        if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
+        ret = send(soquete, pacote, sizeof(struct pacote), 0);
+        if(ret == -1) {
             perror("Erro ao usar send");
             exit(1);
         }
 
         while(1) {
+            comeco = timestamp();
             do {
-                if(recv(soquete, &resposta, sizeof(struct pacote), 0) == -1) {
+                ret = recv(soquete, &resposta, sizeof(struct pacote), 0);
+                if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                    break;
+                }
+                else if(ret == -1) {
                     perror("Erro ao usar recv");
                     exit(1);
                 }
-            } while(resposta.marcador != MARCADOR);
+            } while(resposta.marcador != MARCADOR && timestamp() - comeco <= timeoutMilis);
 
-            if(resposta.tipo == TIPO_ACK) {
-                puts("ACK recebido!");
-                return;
+            if(!compara_crc(&resposta)) {
+                if(resposta.tipo == TIPO_ACK) {
+                    puts("ACK recebido!");
+                    return;
+                }
+                else if(resposta.tipo == TIPO_NACK) {
+                    puts("NACK recebido!");
+                    break;
+                }
             }
-            else if(resposta.tipo == TIPO_NACK) {
-                puts("NACK recebido!");
+            
+            if(timestamp() - comeco > timeoutMilis) {
+                puts("Timeout!");
                 break;
             }
         }
