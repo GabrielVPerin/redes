@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "player.h"
+#include "entities.h"
 #include "terminal.h"
 #include "map.h"
+#include "types.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,17 +17,17 @@ int main(int argc, char *argv[])
 		createMap(mapa, argv[argc - 1]);
 	else
 		createMap(mapa, NULL);
-	struct player p = spawnPlayer(mapa);
+	struct player pac = spawnPlayer(mapa);
 
 	char move;
 	while (1)
 	{
 		system("clear");
-		drawMap(mapa);
+		drawMap(mapa, pac);
 		do
 		{
 			move = getchar();
-		} while (movePlayer(&p, mapa, move));
+		} while (movePlayer(&pac, mapa, move));
 	}
 
 	reset_terminal();

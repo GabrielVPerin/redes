@@ -1,28 +1,34 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "player.h"
+#include "entities.h"
 #include "map.h"
 
-void drawMap(char mapa[MAP_SIZE][MAP_SIZE])
+void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct player p)
 {
 
     printf("\n");
-    for (size_t i = 0; i < MAP_SIZE; i++)
+    for (int i = 0; i < MAP_SIZE; i++)
     {
-        for (size_t j = 0; j < MAP_SIZE; j++)
+        for (int j = 0; j < MAP_SIZE; j++)
         {
-            switch (mapa[i][j])
+            if (playerView(j, i, p))
             {
-            case 'X':
-                printf("# ");
-                break;
-            case 'P':
-                printf("P ");
-                break;
-            default:
-                printf("  ");
-                break;
+
+                switch (mapa[i][j])
+                {
+                case 'X':
+                    printf("# ");
+                    break;
+                case 'P':
+                    printf("P ");
+                    break;
+                default:
+                    printf("  ");
+                    break;
+                }
             }
+            else
+                printf("  ");
         }
         printf("\n");
     }
