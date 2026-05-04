@@ -4,9 +4,9 @@
 #define __ENTITIES__
 
 
-struct player spawnPlayer(char mapa[MAP_SIZE][MAP_SIZE]);
-int movePlayer(struct player *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao);
-int playerView(int x, int y, struct player p);
-
+struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE]);
+int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao);
+int pacmanView(int x, int y, struct pacman p);
+void moveAllGhosts(char mapa[MAP_SIZE][MAP_SIZE], struct entities *entities);
 
 #endif

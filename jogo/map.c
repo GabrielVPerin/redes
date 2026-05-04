@@ -3,7 +3,7 @@
 #include "entities.h"
 #include "map.h"
 
-void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct player p)
+void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
 {
 
     printf("\n");
@@ -11,7 +11,7 @@ void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct player p)
     {
         for (int j = 0; j < MAP_SIZE; j++)
         {
-            if (playerView(j, i, p))
+            if (pacmanView(j, i, p))
             {
 
                 switch (mapa[i][j])
@@ -19,11 +19,12 @@ void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct player p)
                 case 'X':
                     printf("# ");
                     break;
-                case 'P':
-                    printf("P ");
+                case 'E':
+                case '0':
+                    printf("  ");
                     break;
                 default:
-                    printf("  ");
+                    printf("%c ", mapa[i][j]);
                     break;
                 }
             }

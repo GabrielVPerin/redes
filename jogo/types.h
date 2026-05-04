@@ -3,7 +3,7 @@
 
 #define MAP_SIZE 40
 
-struct player
+struct pacman
 {
 	unsigned int x;
 	unsigned int y;
@@ -16,7 +16,9 @@ struct ghost
 	char cor;
 	unsigned int x;
 	unsigned int y;
-};
+	int isFacing; // 1-UP -1-Down 2-LEFT -2-RIGHT
+	int lastTurn; // 0-left 1-right
+}; 
 
 struct file{
 	char *filename;
@@ -26,7 +28,7 @@ struct file{
 
 struct entities
 {
-	struct player player;
+	struct pacman pacman;
 	struct ghost redGhost;
 	struct ghost yellowGhost;
 	struct ghost greenGhost;
