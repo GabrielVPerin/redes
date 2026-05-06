@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <memory.h>
 
 #include <rede.h>
 #include <protocolo.h>
@@ -77,6 +78,7 @@ void rede_envia(struct pacote *pacote, int soquete)
 
         while(1) {
             comeco = timestamp();
+            memset(&resposta, 2, sizeof(struct pacote));
             do {
                 ret = recv(soquete, &resposta, sizeof(struct pacote), 0);
                 if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
