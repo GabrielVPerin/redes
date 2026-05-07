@@ -57,18 +57,20 @@ int cria_raw_socket(char *nome_interface_rede)
     return soquete;
 }
 
-// TODO: Tempo de timeout aumentar
-
 void rede_envia(struct pacote *pacote, int soquete)
 {
     struct pacote resposta;
     int ret;
-    size_t timeoutMilis = 900;
+    size_t timeoutMilis = 300;
+    size_t timeoutCont = 0;
     size_t comeco;
-    struct timeval timeout = { .tv_sec = timeoutMilis/1000, .tv_usec = (timeoutMilis % 1000) * 1000 };
-    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char*) &timeout, sizeof(timeout));
+    struct timeval timeout;
 
-    while(1) {
+    while(timeoutCont <= 6) {
+        timeout.tv_sec = timeoutMilis/1000;
+        timeout.tv_usec = (timeoutMilis % 1000) * 1000;
+        setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+
         ret = send(soquete, pacote, sizeof(struct pacote), 0);
         if(ret == -1) {
             perror("Erro ao usar send");
@@ -102,10 +104,15 @@ void rede_envia(struct pacote *pacote, int soquete)
             
             if(timestamp() - comeco > timeoutMilis) {
                 puts("Timeout!");
+                timeoutCont++;
+                timeoutMilis *= 2;
                 break;
             }
         }
     }
+
+    fprintf(stderr, "Quantidade máxima de timeouts excedida!\n");
+    exit(1);
 }
 
 static void rede_envia_mensagem(int soquete, uint8_t codigo)
