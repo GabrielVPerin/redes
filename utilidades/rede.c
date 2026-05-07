@@ -58,7 +58,6 @@ int cria_raw_socket(char *nome_interface_rede)
 }
 
 // TODO: Tempo de timeout aumentar
-// Devo checar crc dos pacotes de ACK e NACK?
 
 void rede_envia(struct pacote *pacote, int soquete)
 {
@@ -125,8 +124,12 @@ static void rede_envia_mensagem(int soquete, uint8_t codigo)
 
 }
 
+// Escuta um pacote e envia um ACK ou NACK caso o crc esteja certo ou não respectivamente
+// IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
 void rede_escuta(struct pacote *pacote, int soquete)
 {
+    uint8_t sequenciaAnterior = pacote->sequencia;
+
     while(1) {
         do {
             if(recv(soquete, pacote, sizeof(struct pacote), 0) == -1) {
@@ -135,15 +138,16 @@ void rede_escuta(struct pacote *pacote, int soquete)
             }
         } while(pacote->marcador != MARCADOR);
 
-        if(compara_crc(pacote)) {
-            rede_envia_mensagem(soquete, TIPO_NACK);
-        }
-        else {
-            rede_envia_mensagem(soquete, TIPO_ACK);
+        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % 64) {
+            if(compara_crc(pacote)) {
+                rede_envia_mensagem(soquete, TIPO_NACK);
+            }
+            else {
+                rede_envia_mensagem(soquete, TIPO_ACK);
 
-            return;
+                return;
+            }
         }
-
     }
 }
 
