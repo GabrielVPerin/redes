@@ -134,6 +134,8 @@ static void rede_envia_mensagem(int soquete, uint8_t codigo)
 
 }
 
+// Pergunta: Se um dos lados forem interrompidos o numero de sequencia será perdido, isso é um problema?
+
 // Escuta um pacote e envia um ACK ou NACK caso o crc esteja certo ou não respectivamente
 // IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
 void rede_escuta(struct pacote *pacote, int soquete)
