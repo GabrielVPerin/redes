@@ -15,6 +15,8 @@
 #include <rede.h>
 #include <protocolo.h>
 
+#define TIMEOUT_MAX 6
+
 static size_t timestamp()
 {
     struct timeval tp;
@@ -66,7 +68,7 @@ void rede_envia(struct pacote *pacote, int soquete)
     size_t comeco;
     struct timeval timeout;
 
-    while(timeoutCont <= 6) {
+    while(timeoutCont <= TIMEOUT_MAX) {
         timeout.tv_sec = timeoutMilis/1000;
         timeout.tv_usec = (timeoutMilis % 1000) * 1000;
         setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
@@ -77,8 +79,9 @@ void rede_envia(struct pacote *pacote, int soquete)
             exit(1);
         }
 
+        comeco = timestamp();
+
         while(1) {
-            comeco = timestamp();
             memset(&resposta, 2, sizeof(struct pacote));
             do {
                 ret = recv(soquete, &resposta, sizeof(struct pacote), 0);
