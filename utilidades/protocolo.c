@@ -4,7 +4,7 @@
 #include <protocolo.h>
 
 static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
-    uint8_t crc = 0x00;
+    uint8_t crc = 0;
     uint8_t polinomio = 0x07;
 
     for(size_t i = 0; i < tamanho; i++) {
@@ -25,11 +25,11 @@ static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
 
 int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, uint8_t tipo, const uint8_t *dados)
 {
-    if(tamanho > 31)
+    if(tamanho > MAX_5BIT)
         return 1;
-    if(sequencia > 63)
+    if(sequencia > MAX_6BIT)
         return 1;
-    if(tipo > 31)
+    if(tipo > MAX_5BIT)
         return 1;
 
     memset(pacote, 0, sizeof(struct pacote));

@@ -16,7 +16,7 @@
 #include <rede.h>
 #include <protocolo.h>
 
-#define TIMEOUT_MAX 6
+#define MAX_TIMEOUT 6
 
 static size_t timestamp()
 {
@@ -71,7 +71,7 @@ void rede_envia(struct pacote *pacote, int soquete)
     struct sockaddr_ll origem;
     socklen_t tamOrigem = sizeof(origem);
 
-    while(timeoutCont <= TIMEOUT_MAX) {
+    while(timeoutCont <= MAX_TIMEOUT) {
         timeout.tv_sec = timeoutMilis/1000;
         timeout.tv_usec = (timeoutMilis % 1000) * 1000;
         setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
@@ -161,7 +161,7 @@ void rede_escuta(struct pacote *pacote, int soquete)
         if(origem.sll_pkttype == PACKET_OUTGOING)
             continue;
 
-        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % 64) {
+        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % (MAX_6BIT + 1)) {
             if(compara_crc(pacote)) {
                 rede_envia_mensagem(soquete, TIPO_NACK);
             }

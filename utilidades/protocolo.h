@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 #define MARCADOR 0x7E
+#define MAX_5BIT 31
+#define MAX_6BIT 63
 
 struct pacote {
     uint8_t marcador;
