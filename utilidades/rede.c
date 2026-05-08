@@ -1,14 +1,30 @@
 #include <arpa/inet.h>
+#include <asm-generic/errno-base.h>
+#include <asm-generic/errno.h>
 #include <net/ethernet.h>
 #include <linux/if_packet.h>
 #include <net/if.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <errno.h>
+#include <memory.h>
 
 #include <rede.h>
 #include <protocolo.h>
+
+#define TIMEOUT_MAX 6
+
+static size_t timestamp()
+{
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+
+    return tp.tv_sec*1000 + tp.tv_usec/1000;
+}
  
 int cria_raw_socket(char *nome_interface_rede) 
 {
@@ -44,37 +60,68 @@ int cria_raw_socket(char *nome_interface_rede)
     return soquete;
 }
 
-// TODO: Talvez send pode enviar pacotes parciais
-// TODO: Timeout
-
 void rede_envia(struct pacote *pacote, int soquete)
 {
     struct pacote resposta;
+    int ret;
+    size_t timeoutMilis = 300;
+    size_t timeoutCont = 0;
+    size_t comeco;
+    struct timeval timeout;
+    struct sockaddr_ll origem;
+    socklen_t tamOrigem = sizeof(origem);
 
-    while(1) {
-        if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
+    while(timeoutCont <= TIMEOUT_MAX) {
+        timeout.tv_sec = timeoutMilis/1000;
+        timeout.tv_usec = (timeoutMilis % 1000) * 1000;
+        setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+
+        ret = send(soquete, pacote, sizeof(struct pacote), 0);
+        if(ret == -1) {
             perror("Erro ao usar send");
             exit(1);
         }
 
+        comeco = timestamp();
+
         while(1) {
+            memset(&resposta, 2, sizeof(struct pacote));
             do {
-                if(recv(soquete, &resposta, sizeof(struct pacote), 0) == -1) {
+                ret = recvfrom(soquete, &resposta, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem); // Uso recvfrom para tratar pacotes duplicados pelo loopback
+                if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                    break;
+                }
+                else if(ret == -1) {
                     perror("Erro ao usar recv");
                     exit(1);
                 }
-            } while(resposta.marcador != MARCADOR);
+            } while(resposta.marcador != MARCADOR && timestamp() - comeco <= timeoutMilis);
 
-            if(resposta.tipo == TIPO_ACK) {
-                puts("ACK recebido!");
-                return;
+            if(origem.sll_pkttype == PACKET_OUTGOING)
+                continue;
+
+            if(!compara_crc(&resposta)) {
+                if(resposta.tipo == TIPO_ACK) {
+                    puts("ACK recebido!");
+                    return;
+                }
+                else if(resposta.tipo == TIPO_NACK) {
+                    puts("NACK recebido!");
+                    break;
+                }
             }
-            else if(resposta.tipo == TIPO_NACK) {
-                puts("NACK recebido!");
+            
+            if(timestamp() - comeco > timeoutMilis) {
+                puts("Timeout!");
+                timeoutCont++;
+                timeoutMilis *= 2;
                 break;
             }
         }
     }
+
+    fprintf(stderr, "Quantidade máxima de timeouts excedida!\n");
+    exit(1);
 }
 
 static void rede_envia_mensagem(int soquete, uint8_t codigo)
@@ -93,25 +140,37 @@ static void rede_envia_mensagem(int soquete, uint8_t codigo)
 
 }
 
+// Pergunta: Se um dos lados forem interrompidos o numero de sequencia será perdido, isso é um problema?
+
+// Escuta um pacote e envia um ACK ou NACK caso o crc esteja certo ou não respectivamente
+// IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
 void rede_escuta(struct pacote *pacote, int soquete)
 {
+    uint8_t sequenciaAnterior = pacote->sequencia;
+    struct sockaddr_ll origem;
+    socklen_t tamOrigem = sizeof(origem);
+
     while(1) {
         do {
-            if(recv(soquete, pacote, sizeof(struct pacote), 0) == -1) {
+            if(recvfrom(soquete, pacote, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem) == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 perror("Erro ao usar recv");
                 exit(1);
             }
         } while(pacote->marcador != MARCADOR);
 
-        if(compara_crc(pacote)) {
-            rede_envia_mensagem(soquete, TIPO_NACK);
-        }
-        else {
-            rede_envia_mensagem(soquete, TIPO_ACK);
+        if(origem.sll_pkttype == PACKET_OUTGOING)
+            continue;
 
-            return;
-        }
+        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % 64) {
+            if(compara_crc(pacote)) {
+                rede_envia_mensagem(soquete, TIPO_NACK);
+            }
+            else {
+                rede_envia_mensagem(soquete, TIPO_ACK);
 
+                return;
+            }
+        }
     }
 }
 
