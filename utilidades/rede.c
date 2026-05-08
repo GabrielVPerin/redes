@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
@@ -67,6 +68,8 @@ void rede_envia(struct pacote *pacote, int soquete)
     size_t timeoutCont = 0;
     size_t comeco;
     struct timeval timeout;
+    struct sockaddr_ll origem;
+    socklen_t tamOrigem = sizeof(origem);
 
     while(timeoutCont <= TIMEOUT_MAX) {
         timeout.tv_sec = timeoutMilis/1000;
@@ -84,7 +87,7 @@ void rede_envia(struct pacote *pacote, int soquete)
         while(1) {
             memset(&resposta, 2, sizeof(struct pacote));
             do {
-                ret = recv(soquete, &resposta, sizeof(struct pacote), 0);
+                ret = recvfrom(soquete, &resposta, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem); // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
                     break;
                 }
@@ -93,6 +96,9 @@ void rede_envia(struct pacote *pacote, int soquete)
                     exit(1);
                 }
             } while(resposta.marcador != MARCADOR && timestamp() - comeco <= timeoutMilis);
+
+            if(origem.sll_pkttype == PACKET_OUTGOING)
+                continue;
 
             if(!compara_crc(&resposta)) {
                 if(resposta.tipo == TIPO_ACK) {
@@ -141,14 +147,19 @@ static void rede_envia_mensagem(int soquete, uint8_t codigo)
 void rede_escuta(struct pacote *pacote, int soquete)
 {
     uint8_t sequenciaAnterior = pacote->sequencia;
+    struct sockaddr_ll origem;
+    socklen_t tamOrigem = sizeof(origem);
 
     while(1) {
         do {
-            if(recv(soquete, pacote, sizeof(struct pacote), 0) == -1) {
+            if(recvfrom(soquete, pacote, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem) == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 perror("Erro ao usar recv");
                 exit(1);
             }
         } while(pacote->marcador != MARCADOR);
+
+        if(origem.sll_pkttype == PACKET_OUTGOING)
+            continue;
 
         if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % 64) {
             if(compara_crc(pacote)) {
