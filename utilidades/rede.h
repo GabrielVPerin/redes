@@ -3,8 +3,10 @@
 
 #include <protocolo.h>
 
+// Cria um socket em uma interface (função criada pelo Todt)
 int cria_raw_socket(char *nome_interface_rede);
 
+// Fica enviando um pacote até que um ACK seja recebido ou o limite máximo de timeouts seja excedido
 void rede_envia(struct pacote *pacote, int soquete);
 
 // Escuta um pacote e envia um ACK ou NACK caso o crc esteja certo ou não respectivamente

@@ -34,6 +34,8 @@ enum tipos_pacote {
 };
 
 
+// Constroi pacote
+// Retorna 1 caso algum argumento exceda o valor máximo definido pelo protocolo e 0 caso contrário
 int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, uint8_t tipo, const uint8_t *dados);
 
 // Retorna 0 se forem iguais

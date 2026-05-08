@@ -18,6 +18,7 @@
 
 #define MAX_TIMEOUT 6
 
+// Retorna o tempo atual do seu computador em milisegundos
 static size_t timestamp()
 {
     struct timeval tp;
@@ -26,6 +27,7 @@ static size_t timestamp()
     return tp.tv_sec*1000 + tp.tv_usec/1000;
 }
  
+// Cria um socket em uma interface (função criada pelo Todt)
 int cria_raw_socket(char *nome_interface_rede) 
 {
     // Cria arquivo para o socket sem qualquer protocolo
@@ -60,6 +62,7 @@ int cria_raw_socket(char *nome_interface_rede)
     return soquete;
 }
 
+// Fica enviando um pacote até que um ACK seja recebido ou o limite máximo de timeouts seja excedido
 void rede_envia(struct pacote *pacote, int soquete)
 {
     struct pacote resposta;
@@ -124,11 +127,12 @@ void rede_envia(struct pacote *pacote, int soquete)
     exit(1);
 }
 
-static void rede_envia_mensagem(int soquete, uint8_t codigo)
+// Envia um pacote simples (sem dados)
+static void rede_envia_mensagem(int soquete, uint8_t tipo)
 {
     struct pacote mensagem;
 
-    if(constroi_pacote(&mensagem, 0, 0, codigo, NULL)) {
+    if(constroi_pacote(&mensagem, 0, 0, tipo, NULL)) {
         fprintf(stderr, "Erro ao construir pacote");
         exit(1);
     }
