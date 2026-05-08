@@ -17,6 +17,7 @@
 #include <protocolo.h>
 
 #define MAX_TIMEOUT 6
+#define TEMPO_TIMEOUT 300
 
 // Retorna o tempo atual do seu computador em milisegundos
 static size_t timestamp()
@@ -58,68 +59,81 @@ int cria_raw_socket(char *nome_interface_rede)
             "Verifique se a interface de rede foi especificada corretamente.\n");
         exit(1);
     }
- 
+
     return soquete;
+}
+
+// Escuta um resposta de ACK/NACK e controla timeout
+// Retorna 0 caso um ACK seja recebido
+// Retorna 1 caso um NACK seja recebido
+// Retorna 2 caso ocorra um timeout
+static int escuta_resposta(struct pacote *pacote, int soquete, size_t timeoutMilis)
+{
+    struct pacote resposta;
+    struct sockaddr_ll origem;
+    socklen_t tamOrigem = sizeof(origem);
+    int ret;
+    size_t comeco = timestamp();
+
+    while(1) {
+        memset(&resposta, 2, sizeof(struct pacote));
+        do {
+            ret = recvfrom(soquete, &resposta, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem); // Uso recvfrom para tratar pacotes duplicados pelo loopback
+            if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                break;
+            }
+            else if(ret == -1) {
+                perror("Erro ao usar recv");
+                exit(1);
+            }
+        } while(resposta.marcador != MARCADOR && timestamp() - comeco <= timeoutMilis);
+
+        if(origem.sll_pkttype == PACKET_OUTGOING)
+            continue;
+
+        if(timestamp() - comeco > timeoutMilis)
+            return 2;
+
+        if(!compara_crc(&resposta)) {
+            if(resposta.tipo == TIPO_ACK)
+                return 0;
+            else if(resposta.tipo == TIPO_NACK)
+                return 1;
+        }
+    }
 }
 
 // Fica enviando um pacote até que um ACK seja recebido ou o limite máximo de timeouts seja excedido
 void rede_envia(struct pacote *pacote, int soquete)
 {
-    struct pacote resposta;
-    int ret;
-    size_t timeoutMilis = 300;
+    size_t timeoutMilis = TEMPO_TIMEOUT;
     size_t timeoutCont = 0;
-    size_t comeco;
-    struct timeval timeout;
-    struct sockaddr_ll origem;
-    socklen_t tamOrigem = sizeof(origem);
+    int ret;
+    struct timeval timeout = {
+        .tv_sec = timeoutMilis/1000,
+        .tv_usec = (timeoutMilis % 1000) * 1000
+    };
+    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
 
     while(timeoutCont <= MAX_TIMEOUT) {
-        timeout.tv_sec = timeoutMilis/1000;
-        timeout.tv_usec = (timeoutMilis % 1000) * 1000;
-        setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
-
-        ret = send(soquete, pacote, sizeof(struct pacote), 0);
-        if(ret == -1) {
+        if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
             perror("Erro ao usar send");
             exit(1);
         }
 
-        comeco = timestamp();
-
-        while(1) {
-            memset(&resposta, 2, sizeof(struct pacote));
-            do {
-                ret = recvfrom(soquete, &resposta, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem); // Uso recvfrom para tratar pacotes duplicados pelo loopback
-                if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-                    break;
-                }
-                else if(ret == -1) {
-                    perror("Erro ao usar recv");
-                    exit(1);
-                }
-            } while(resposta.marcador != MARCADOR && timestamp() - comeco <= timeoutMilis);
-
-            if(origem.sll_pkttype == PACKET_OUTGOING)
-                continue;
-
-            if(!compara_crc(&resposta)) {
-                if(resposta.tipo == TIPO_ACK) {
-                    puts("ACK recebido!");
-                    return;
-                }
-                else if(resposta.tipo == TIPO_NACK) {
-                    puts("NACK recebido!");
-                    break;
-                }
-            }
-            
-            if(timestamp() - comeco > timeoutMilis) {
-                puts("Timeout!");
+        ret = escuta_resposta(pacote, soquete, timeoutMilis);
+        switch(ret) {
+            case 0:
+                puts("ACK recebido!");
+                return;
+            case 1:
+                puts("NACK recebido!");
+                break;
+            case 2:
                 timeoutCont++;
                 timeoutMilis *= 2;
+                puts("Timeout!");
                 break;
-            }
         }
     }
 
@@ -145,6 +159,7 @@ static void rede_envia_mensagem(int soquete, uint8_t tipo)
 }
 
 // Pergunta: Se um dos lados forem interrompidos o numero de sequencia será perdido, isso é um problema?
+// TODO: Tenho que remover timeout na função escuta
 
 // Escuta um pacote e envia um ACK ou NACK caso o crc esteja certo ou não respectivamente
 // IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
