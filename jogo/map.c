@@ -35,6 +35,12 @@ void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
     }
 }
 
+// void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
+// {
+//     printf("\n");
+
+// }
+
 void createMap(char mapa[MAP_SIZE][MAP_SIZE], char *filename)
 {
 
@@ -53,4 +59,31 @@ void createMap(char mapa[MAP_SIZE][MAP_SIZE], char *filename)
     }
 
     fclose(file);
+}
+
+char **drawPacmanView(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
+{
+    int pV = (int)p.visao;
+
+    char **mapView = malloc((pV*2 + 1) * sizeof(char *));
+    for (size_t i = 0; i < (p.visao*2 + 1); i++)
+        mapView[i] = malloc((pV*2 + 1) * sizeof(char));
+
+    int xInicial = (int)p.x - pV;
+    int yInicial = (int)p.y - pV;
+
+    for (size_t i = 0; i < (p.visao*2 + 1); i++)
+    {
+        int y = yInicial + i;
+        for (size_t j = 0; j < (p.visao*2 + 1); j++)
+        {
+            int x = xInicial + j;
+            if (x < 0 || x >= 40 || y < 0 || y >= 40)
+                mapView[i][j] = '0';
+            else
+                mapView[i][j] = mapa[y][x];
+        }
+    }
+
+    return mapView;
 }

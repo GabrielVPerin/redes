@@ -150,7 +150,7 @@ struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE])
     }
 
     entidades.pacman.passos = 0;
-    entidades.pacman.visao = 100;
+    entidades.pacman.visao = 1;
 
     entidades.blueGhost.cor = 'B';
     entidades.blueGhost.isFacing = 1;
@@ -209,7 +209,7 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao)
     *p = aux;
     mapa[p->y][p->x] = 'P';
     p->passos++;
-    if (p->passos % 5 == 0)
+    if ((p->passos % 5 && p->visao < 40)== 0)
         p->visao++;
 
     return 0;
@@ -217,13 +217,20 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao)
 
 int pacmanView(int x, int y, struct pacman p)
 {
-    int dx = x - (int)p.x;
-    int dy = y - (int)p.y;
-    int r = (int)p.visao;
+    // int dx = x - (int)p.x;
+    // int dy = y - (int)p.y;
+    // int r = (int)p.visao;
+    int pX = (int)p.x;
+    int pY = (int)p.y;
+    int pV = (int)p.visao;
+    int lP = x >= pX - pV;
+    int rP = x <= pX + pV;
+    int uP = y >= pY - pV;
+    int dP = y <= pY + pV;
 
-    return (dx * dx + dy * dy) <= (r * r + r);
+    // return (dx * dx + dy * dy) <= (r * r + r);
+    return lP && rP && uP && dP;
 }
-
 
 // 1 up / -1 down / 2 left / -2 right
 
@@ -283,7 +290,7 @@ int canMove(char mapa[MAP_SIZE][MAP_SIZE], int x, int y)
     if (x < 0 || x >= MAP_SIZE || y < 0 || y >= MAP_SIZE)
         return 0;
 
-    return mapa[y][x] != 'X' && !(mapa[y][x] >= '1' && mapa[y][x] <= '6');
+    return mapa[y][x] == '0'; // && !(mapa[y][x] >= '1' && mapa[y][x] <= '6');
 }
 
 void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)
@@ -293,8 +300,8 @@ void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)
     int dir = gR->isFacing;
 
     int dirs[4] = {
-        dir,
         turnLeft(dir),
+        dir,
         turnRight(dir),
         turnBack(dir)};
 
@@ -356,7 +363,7 @@ void moveGreenGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gG)
 
     int dirs[4];
 
-    if (gG->lastTurn)
+    if (gG->lastTurn) // 0-left 1-right
     {
         dirs[0] = turnRight(dir);
         dirs[1] = dir;
@@ -440,5 +447,4 @@ void moveAllGhosts(char mapa[MAP_SIZE][MAP_SIZE], struct entities *entities)
     moveBlueGhost(mapa, &entities->blueGhost);
     moveGreenGhost(mapa, &entities->greenGhost);
     moveYellowGhost(mapa, &entities->yellowGhost);
-
 }

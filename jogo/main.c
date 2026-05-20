@@ -25,12 +25,49 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		system("clear");
-		drawMap(mapa, pacMan);
+		// drawMap(mapa, pacMan);
+		// printf("\n\n");
+		char **mapView = drawPacmanView(mapa, pacMan);
+
+		FILE *enviarCliente = fopen("pacotaoDoPerin.csv", "w+");
+		if (!enviarCliente)
+			return 1;
+
+		// unsigned int nPacote = (pacMan.visao * 2 + 1) << 1;
+		for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
+		{
+			fwrite(mapView[i], sizeof(char), pacMan.visao * 2 + 1, enviarCliente);
+			fputc('\n', enviarCliente);
+		}
+		for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
+		{
+			for (int j = 0; j < ((int)pacMan.visao * 2 + 1); j++)
+			{
+				switch (mapView[i][j])
+				{
+				case 'X':
+					printf("# ");
+					break;
+				case 'E':
+				case '0':
+					printf("  ");
+					break;
+				default:
+					printf("%c ", mapView[i][j]);
+					break;
+				}
+			}
+			printf("\n");
+			free(mapView[i]);
+		}
+		free(mapView);
 		do
 		{
 			move = getchar();
 		} while (movePacman(&pacMan, mapa, move));
 		moveAllGhosts(mapa, &entities);
+
+		fclose(enviarCliente);
 	}
 
 	reset_terminal();

@@ -7,4 +7,6 @@ void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p);
 
 void createMap(char mapa[MAP_SIZE][MAP_SIZE], char *filename);
 
+char **drawPacmanView(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p);
+
 #endif
