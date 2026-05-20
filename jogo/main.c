@@ -22,6 +22,10 @@ int main(int argc, char *argv[])
 	struct pacman pacMan = entities.pacman;
 
 	char move;
+	FILE *enviarCliente = fopen("pacotaoDoPerin.csv", "w+");
+	if (!enviarCliente)
+		return 1;
+
 	while (1)
 	{
 		system("clear");
@@ -29,11 +33,10 @@ int main(int argc, char *argv[])
 		// printf("\n\n");
 		char **mapView = drawPacmanView(mapa, pacMan);
 
-		FILE *enviarCliente = fopen("pacotaoDoPerin.csv", "w+");
-		if (!enviarCliente)
-			return 1;
+		// FILE *enviarCliente = fopen("pacotaoDoPerin.csv", "w+");
 
 		// unsigned int nPacote = (pacMan.visao * 2 + 1) << 1;
+		fseek(enviarCliente, 0, SEEK_SET);
 		for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
 		{
 			fwrite(mapView[i], sizeof(char), pacMan.visao * 2 + 1, enviarCliente);
@@ -66,10 +69,9 @@ int main(int argc, char *argv[])
 			move = getchar();
 		} while (movePacman(&pacMan, mapa, move));
 		moveAllGhosts(mapa, &entities);
-
-		fclose(enviarCliente);
 	}
 
+	fclose(enviarCliente);
 	reset_terminal();
 
 	return 0;
