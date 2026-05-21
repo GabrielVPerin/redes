@@ -3,6 +3,16 @@
 
 #include <protocolo.h>
 
+// Devo usar bit mask?
+
+uint8_t sequenciaGlobal = 0;
+
+// Incrementa 1 na variável sequenciaGlobal
+void incrementa_sequencia()
+{
+    sequenciaGlobal = (sequenciaGlobal + 1) % (MAX_6BIT + 1);
+}
+
 static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
     uint8_t crc = 0;
     uint8_t polinomio = 0x07;
@@ -25,11 +35,9 @@ static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
 
 // Constroi pacote
 // Retorna 1 caso algum argumento exceda o valor máximo definido pelo protocolo e 0 caso contrário
-int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, uint8_t tipo, const uint8_t *dados)
+int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t tipo, const uint8_t *dados)
 {
     if(tamanho > MAX_5BIT)
-        return 1;
-    if(sequencia > MAX_6BIT)
         return 1;
     if(tipo > MAX_5BIT)
         return 1;
@@ -38,7 +46,7 @@ int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t sequencia, u
 
     pacote->marcador = MARCADOR;
     pacote->tamanho = tamanho;
-    pacote->sequencia = sequencia;
+    pacote->sequencia = sequenciaGlobal;
     pacote->tipo = tipo;
     if(dados != NULL)
         memcpy(pacote->dados, dados, tamanho);

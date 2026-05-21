@@ -122,9 +122,11 @@ void rede_envia(struct pacote *pacote, int soquete)
         }
 
         ret = escuta_resposta(pacote, soquete, timeoutMilis);
+
         switch(ret) {
             case 0:
                 puts("ACK recebido!");
+                incrementa_sequencia();
                 return;
             case 1:
                 puts("NACK recebido!");
@@ -146,7 +148,7 @@ static void rede_envia_mensagem(int soquete, uint8_t tipo)
 {
     struct pacote mensagem;
 
-    if(constroi_pacote(&mensagem, 0, 0, tipo, NULL)) {
+    if(constroi_pacote(&mensagem, 0, tipo, NULL)) {
         fprintf(stderr, "Erro ao construir pacote");
         exit(1);
     }
@@ -165,7 +167,6 @@ static void rede_envia_mensagem(int soquete, uint8_t tipo)
 // IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
 void rede_escuta(struct pacote *pacote, int soquete)
 {
-    uint8_t sequenciaAnterior = pacote->sequencia;
     struct sockaddr_ll origem;
     socklen_t tamOrigem = sizeof(origem);
 
@@ -180,12 +181,13 @@ void rede_escuta(struct pacote *pacote, int soquete)
         if(origem.sll_pkttype == PACKET_OUTGOING)
             continue;
 
-        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == (sequenciaAnterior + 1) % (MAX_6BIT + 1)) {
+        if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == sequenciaGlobal) {
             if(compara_crc(pacote)) {
                 rede_envia_mensagem(soquete, TIPO_NACK);
             }
             else {
                 rede_envia_mensagem(soquete, TIPO_ACK);
+                incrementa_sequencia();
 
                 return;
             }
