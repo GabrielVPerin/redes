@@ -4,6 +4,7 @@
 #include <protocolo.h>
 #include <rede.h>
 
+// Responsavel por enviar os dados do arquivo
 static void envia_dados(FILE *arquivo, int soquete)
 {
     struct pacote dados;
@@ -20,6 +21,7 @@ static void envia_dados(FILE *arquivo, int soquete)
     rede_envia(&dados, soquete);
 }
 
+// Responsavel por mandar o pacote de tipo de arquivo
 static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
 {
     if(strlen(nomeArquivo) + 1 > MAX_6BIT)
@@ -36,6 +38,7 @@ static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
     return 0;
 }
 
+// Cria um arquivo com o nome enviado e escreve o conteúdo
 void arquivo_recebe(int soquete)
 {
     struct pacote dados;
