@@ -170,7 +170,14 @@ void rede_escuta(struct pacote *pacote, int soquete)
     struct sockaddr_ll origem;
     socklen_t tamOrigem = sizeof(origem);
 
+    struct timeval timeout = {
+        .tv_sec = 0,
+        .tv_usec = 0
+    };
+    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+
     while(1) {
+        memset(pacote, 0, sizeof(struct pacote));
         do {
             if(recvfrom(soquete, pacote, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem) == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 perror("Erro ao usar recv");
