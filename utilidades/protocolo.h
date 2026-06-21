@@ -16,6 +16,15 @@ struct pacote {
     uint8_t crc;
 };
 
+struct pacote_alternativo {
+    uint8_t marcador;
+    uint8_t tamanho;
+    uint8_t sequencia;
+    uint8_t tipo;
+    uint8_t dados[32];
+    uint8_t crc;
+};
+
 enum tipos_pacote {
     TIPO_ACK            = 0,
     TIPO_NACK           = 1,
