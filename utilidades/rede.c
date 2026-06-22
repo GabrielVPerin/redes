@@ -67,7 +67,7 @@ int cria_raw_socket(char *nome_interface_rede)
 // Retorna 0 caso um ACK seja recebido
 // Retorna 1 caso um NACK seja recebido
 // Retorna 2 caso ocorra um timeout
-static int escuta_resposta(struct pacote *pacote, int soquete, size_t timeoutMilis)
+static int escuta_resposta(int soquete, size_t timeoutMilis)
 {
     struct pacote resposta;
     struct sockaddr_ll origem;
@@ -103,6 +103,19 @@ static int escuta_resposta(struct pacote *pacote, int soquete, size_t timeoutMil
     }
 }
 
+static int byte_check(struct pacote_alternativo *pacote_alternativo ,struct pacote *pacote)
+{
+    if(pacote->tamanho > 8 && pacote->dados[8] == 0x81) { 
+        memcpy(pacote_alternativo, pacote, 13);
+        pacote_alternativo->dados[9] = 0xFF;
+        memcpy((uint8_t *) pacote_alternativo + 14, (uint8_t *) pacote + 13, sizeof(struct pacote_alternativo) - 14);
+
+        return 1;
+    }
+
+    return 0;
+}
+
 // Fica enviando um pacote até que um ACK seja recebido ou o limite máximo de timeouts seja excedido
 void rede_envia(struct pacote *pacote, int soquete)
 {
@@ -115,13 +128,24 @@ void rede_envia(struct pacote *pacote, int soquete)
     };
     setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
 
+    struct pacote_alternativo pacote_alternativo;
+    int byteErro = byte_check(&pacote_alternativo, pacote);
+
     while(timeoutCont <= MAX_TIMEOUT) {
-        if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
-            perror("Erro ao usar send");
-            exit(1);
+        if(byteErro == 1) {
+            if(send(soquete, &pacote_alternativo, sizeof(struct pacote_alternativo), 0) == -1) {
+                perror("Erro ao usar send (pacote_alternativo)");
+                exit(1);
+            }
+        }
+        else {
+            if(send(soquete, pacote, sizeof(struct pacote), 0) == -1) {
+                perror("Erro ao usar send");
+                exit(1);
+            }
         }
 
-        ret = escuta_resposta(pacote, soquete, timeoutMilis);
+        ret = escuta_resposta(soquete, timeoutMilis);
 
         switch(ret) {
             case 0:
@@ -170,16 +194,35 @@ void rede_escuta(struct pacote *pacote, int soquete)
     struct sockaddr_ll origem;
     socklen_t tamOrigem = sizeof(origem);
 
+    struct timeval timeout = {
+        .tv_sec = 0,
+        .tv_usec = 0
+    };
+    setsockopt(soquete, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+
+    uint8_t buffer[sizeof(struct pacote_alternativo)];
+    int ret;
+
     while(1) {
+        memset(pacote, 0, sizeof(struct pacote));
         do {
-            if(recvfrom(soquete, pacote, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem) == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
+            ret = recvfrom(soquete, buffer, sizeof(struct pacote_alternativo), 0, (struct sockaddr *) &origem, &tamOrigem);
+            if(ret == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 perror("Erro ao usar recv");
                 exit(1);
             }
-        } while(pacote->marcador != MARCADOR);
+        } while(buffer[0] != MARCADOR);
 
         if(origem.sll_pkttype == PACKET_OUTGOING)
             continue;
+
+        if(ret == sizeof(struct pacote_alternativo)) {
+            memcpy(pacote, buffer, 13);
+            memcpy((uint8_t *) pacote + 13, &buffer[14], ret - 14);
+        }
+        else {
+            memcpy(pacote, buffer, sizeof(struct pacote));
+        }
 
         if(pacote->tipo != TIPO_NACK && pacote->tipo != TIPO_ACK && pacote->sequencia == sequenciaGlobal) {
             if(compara_crc(pacote)) {

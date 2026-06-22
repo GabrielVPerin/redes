@@ -26,7 +26,7 @@ static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
 {
     if(strlen(nomeArquivo) + 1 > MAX_6BIT)
         return 2;
-    FILE *arquivo = fopen(nomeArquivo, "r");
+    FILE *arquivo = fopen(nomeArquivo, "rb");
     if(arquivo == NULL)
         return 1;
 
@@ -45,7 +45,7 @@ void arquivo_recebe(int soquete)
     rede_escuta(&dados, soquete);
     char nomeArquivo[dados.tamanho];
     strcpy(nomeArquivo, (char *) dados.dados);
-    FILE *arquivo = fopen(nomeArquivo, "w");
+    FILE *arquivo = fopen(nomeArquivo, "wb");
 
     do {
         rede_escuta(&dados, soquete);
