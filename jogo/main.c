@@ -44,23 +44,30 @@ int main(int argc, char *argv[])
 		}
 		for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
 		{
+			int flag = 0;
 			for (int j = 0; j < ((int)pacMan.visao * 2 + 1); j++)
 			{
 				switch (mapView[i][j])
 				{
 				case 'X':
 					printf("# ");
+					flag = 1;
+					break;
+				case 'V':
 					break;
 				case 'E':
 				case '0':
 					printf("  ");
+					flag = 1;
 					break;
 				default:
 					printf("%c ", mapView[i][j]);
+					flag = 1;
 					break;
 				}
 			}
-			printf("\n");
+			if (flag)
+				printf("\n");
 			free(mapView[i]);
 		}
 		free(mapView);

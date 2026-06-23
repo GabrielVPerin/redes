@@ -79,7 +79,7 @@ char **drawPacmanView(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
         {
             int x = xInicial + j;
             if (x < 0 || x >= 40 || y < 0 || y >= 40)
-                mapView[i][j] = '0';
+                mapView[i][j] = 'V';
             else
                 mapView[i][j] = mapa[y][x];
         }
