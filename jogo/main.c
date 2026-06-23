@@ -39,14 +39,19 @@ int main(int argc, char *argv[])
 		fseek(enviarCliente, 0, SEEK_SET);
 		for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
 		{
-			for (int j = 0; j < pacMan.visao * 2 + 1; j++)
+			int flag = 0;
+			for (int j = 0; j < (int)pacMan.visao * 2 + 1; j++)
 			{
-				//MUDAR PARA IGNORAR V
-				fwrite(mapView[i][j], sizeof(char), 1, enviarCliente);
+				if (mapView[i][j] != 'V')
+				{
+					fwrite(&mapView[i][j], sizeof(char), 1, enviarCliente);
+					flag = 1;
+				}
 			}
 
 			// fwrite(mapView[i], sizeof(char), pacMan.visao * 2 + 1, enviarCliente);
-			fputc('\n', enviarCliente);
+			if (flag)
+				fputc('\n', enviarCliente);
 		}
 		for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
 		{

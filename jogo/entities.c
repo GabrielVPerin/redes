@@ -209,7 +209,7 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao)
     *p = aux;
     mapa[p->y][p->x] = 'P';
     p->passos++;
-    if (p->passos % 5 == 0 && p->visao < 20)
+    if (p->passos % 5 == 0 && p->visao < 40)
         p->visao++;
 
     return 0;
