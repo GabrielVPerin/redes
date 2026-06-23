@@ -2,6 +2,7 @@
 #define PROTOCOLO_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define MARCADOR 0x7E
 #define MAX_5BIT 31
@@ -51,6 +52,8 @@ int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t tipo, const 
 // Retorna 0 se forem iguais
 // Retorna 1 se forem diferentes
 int compara_crc(struct pacote *pacote);
+
+uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho);
 
 // Incrementa 1 na variável sequenciaGlobal
 void incrementa_sequencia();
