@@ -10,7 +10,7 @@
  
 int main()
 {
-    int soq = cria_raw_socket("lo");
+    int soq = cria_raw_socket("enp3s0");
     struct pacote data;
 
     rede_escuta(&data, soq);

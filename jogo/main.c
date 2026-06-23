@@ -39,7 +39,13 @@ int main(int argc, char *argv[])
 		fseek(enviarCliente, 0, SEEK_SET);
 		for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
 		{
-			fwrite(mapView[i], sizeof(char), pacMan.visao * 2 + 1, enviarCliente);
+			for (int j = 0; j < pacMan.visao * 2 + 1; j++)
+			{
+				//MUDAR PARA IGNORAR V
+				fwrite(mapView[i][j], sizeof(char), 1, enviarCliente);
+			}
+
+			// fwrite(mapView[i], sizeof(char), pacMan.visao * 2 + 1, enviarCliente);
 			fputc('\n', enviarCliente);
 		}
 		for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
@@ -68,8 +74,9 @@ int main(int argc, char *argv[])
 			}
 			if (flag)
 				printf("\n");
-			free(mapView[i]);
 		}
+		for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
+			free(mapView[i]);
 		free(mapView);
 		do
 		{

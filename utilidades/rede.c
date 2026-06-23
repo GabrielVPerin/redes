@@ -206,7 +206,7 @@ void rede_escuta(struct pacote *pacote, int soquete)
     while(1) {
         memset(pacote, 0, sizeof(struct pacote));
         do {
-            ret = recvfrom(soquete, buffer, sizeof(struct pacote_alternativo), 0, (struct sockaddr *) &origem, &tamOrigem);
+            ret = recvfrom(soquete, buffer, sizeof(struct pacote), 0, (struct sockaddr *) &origem, &tamOrigem);
             if(ret == -1) { // Uso recvfrom para tratar pacotes duplicados pelo loopback
                 perror("Erro ao usar recv");
                 exit(1);
@@ -219,6 +219,7 @@ void rede_escuta(struct pacote *pacote, int soquete)
         if(ret == sizeof(struct pacote_alternativo)) {
             memcpy(pacote, buffer, 13);
             memcpy((uint8_t *) pacote + 13, &buffer[14], ret - 14);
+            printf("Entrou %d\n",ret );
         }
         else {
             memcpy(pacote, buffer, sizeof(struct pacote));

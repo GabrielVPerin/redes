@@ -12,10 +12,10 @@
 
 int main()
 {
-    int soq = cria_raw_socket("lo");
+    int soq = cria_raw_socket("enp3s0");
     struct pacote data;
     double i = 500.71;
-    if(constroi_pacote(&data, sizeof(i), 0, TIPO_DADOS, (uint8_t *) &i))
+    if(constroi_pacote(&data, sizeof(i), TIPO_DADOS, (uint8_t *) &i))
         fprintf(stderr, "Erro ao construir pacote");
 
     rede_envia(&data, soq);
