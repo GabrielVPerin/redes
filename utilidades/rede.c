@@ -105,11 +105,12 @@ static int escuta_resposta(int soquete, size_t timeoutMilis)
 
 static int byte_check(struct pacote_alternativo *pacote_alternativo ,struct pacote *pacote)
 {
-    if(pacote->tamanho > 8 && pacote->dados[8] == 0x81) { 
+    if(pacote->tamanho > 8 && (pacote->dados[8] == 0x81 || pacote->dados[8] == 0x88)) { 
         memcpy(pacote_alternativo, pacote, 13);
         pacote_alternativo->dados[9] = 0xFF;
         memcpy((uint8_t *) pacote_alternativo + 14, (uint8_t *) pacote + 13, sizeof(struct pacote_alternativo) - 14);
         pacote->marcador = MARCADOR + 1;
+        pacote_alternativo->marcador = MARCADOR + 1;
         pacote_alternativo->crc = calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1);
         pacote->marcador = MARCADOR;
 
