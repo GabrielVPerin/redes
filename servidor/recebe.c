@@ -13,7 +13,7 @@
 
 int qtdArquivosVivos = 6;
 
-int main(int argc, char *argv[])
+int main()
 {
     int soq = cria_raw_socket("lo");
     struct pacote pacote;
@@ -28,58 +28,34 @@ int main(int argc, char *argv[])
     srand(time(NULL));
     char mapa[MAP_SIZE][MAP_SIZE];
 
-    if (argc > 1)
-        createMap(mapa, argv[argc - 1]);
-    else
+    rede_escuta(&pacote, soq);
+    if (pacote.tipo == TIPO_ERRO)
+    {
+        fprintf(stderr, "MAPA NULO\n");
         createMap(mapa, NULL);
+    }
+    else if(pacote.tipo == TIPO_TXT)
+    {
+        pacote.dados[pacote.tamanho - 1] = '\0';
+        char *nomeMapa = (char *)pacote.dados;
+        fprintf(stderr, "MAPA FORNECIDO: %s\n", nomeMapa);
+
+        // receber o arquivo do mapa csv
+        arquivo_recebe(soq);
+        fprintf(stderr, "\nMapa chegou");
+        createMap(mapa, nomeMapa);
+        fprintf(stderr, "\nMapa criado");
+    }
 
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
     char move;
 
+    fprintf(stderr,"\nOPA\n");
     while (1)
     {
+        fprintf(stderr, "\n\n\n");
         char **mapView = drawPacmanView(mapa, pacMan);
-        for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
-        {
-            for (int j = 0; j < ((int)pacMan.visao * 2 + 1); j++)
-            {
-                switch (mapView[i][j])
-                {
-                case 'X':
-                    printf("# ");
-                    break;
-                case 'V':
-                    break;
-                case 'E':
-                case '0':
-                    printf("  ");
-                    break;
-                default:
-                    printf("%c ", mapView[i][j]);
-                    break;
-                }
-            }
-            printf("\n");
-        }
-
-        for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
-        {
-            int flag = 0;
-            for (int j = 0; j < (int)pacMan.visao * 2 + 1; j++)
-            {
-                if (mapView[i][j] != 'V')
-                {
-                    fwrite(&mapView[i][j], sizeof(char), 1, enviarCliente);
-                    flag = 1;
-                }
-            }
-            if (flag)
-                fputc('\n', enviarCliente);
-        }
-        fclose(enviarCliente);
-
-        fprintf(stderr, "Enviando mapa.csv\n");
 
         int lado = (int)pacMan.visao * 2 + 1;
         uint8_t lado_envio = (uint8_t)lado;
