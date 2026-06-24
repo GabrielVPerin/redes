@@ -227,16 +227,16 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, in
 
     switch (direcao)
     {
-    case 'w':
+    case TIPO_CIMA:
         aux.y--;
         break;
-    case 'a':
+    case TIPO_ESQUERDA:
         aux.x--;
         break;
-    case 's':
+    case TIPO_BAIXO:
         aux.y++;
         break;
-    case 'd':
+    case TIPO_DIREITA:
         aux.x++;
         break;
     default:

@@ -19,7 +19,7 @@ void recebe_visao(int soq, int lado)
         rede_escuta(&pacote, soq);
         if (pacote.tipo == TIPO_FIM)
             break;
-            
+
         if (pacote.tipo == TIPO_VISUALIZACAO)
         {
             int copy_len = pacote.tamanho;
@@ -30,24 +30,23 @@ void recebe_visao(int soq, int lado)
         }
     }
 
-
     int col = 0;
     for (int i = 0; i < pos; i++)
     {
         char c = buffer[i];
         if (c == '\n')
         {
-            if (col != 0) 
+            if (col != 0)
             {
                 printf("\n");
                 col = 0;
             }
             continue;
         }
-        
+
         if (c == '\r' || c == '\0')
             continue;
-            
+
         switch (c)
         {
         case 'X':
@@ -64,7 +63,6 @@ void recebe_visao(int soq, int lado)
             break;
         }
         col++;
-        
 
         if (col == lado)
         {
@@ -72,13 +70,12 @@ void recebe_visao(int soq, int lado)
             col = 0;
         }
     }
-    
+
     if (col != 0)
         printf("\n");
-        
+
     free(buffer);
 }
-
 
 char movimento()
 {
@@ -100,16 +97,45 @@ void init_terminal()
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 }
 
-void abrir_midia(const char *nome_arquivo) 
+void abrir_midia(const char *nome_arquivo)
 {
     char comando[256];
-    
+
     // Monta o comando: xdg-open "nome_do_arquivo" > /dev/null 2>&1 &
-    // O '&' no final é CRUCIAL: ele faz o player abrir em background. 
+    // O '&' no final é CRUCIAL: ele faz o player abrir em background.
     // Se não colocar o '&', o seu cliente vai travar esperando você fechar o vídeo!
     // O "> /dev/null 2>&1" impede que o player cuspa logs no seu terminal e suje o mapa.
     snprintf(comando, sizeof(comando), "xdg-open \"%s\" > /dev/null 2>&1 &", nome_arquivo);
-    
+
     // Executa o comando no terminal do Linux
     system(comando);
+}
+
+void enviar_movimento(struct pacote *pacote, int soq)
+{
+    char move = movimento();
+    int tipo;
+    switch (move)
+    {
+    case 'w':
+        tipo = TIPO_CIMA;
+        break;
+    case 'a':
+        tipo = TIPO_ESQUERDA;
+        break;
+    case 's':
+        tipo = TIPO_BAIXO;
+        break;
+    case 'd':
+        tipo = TIPO_DIREITA;
+        break;
+    default:
+        tipo = TIPO_ERRO;
+        break;
+    }
+
+    if (constroi_pacote(&pacote, sizeof(move), tipo, (uint8_t *)&move))
+        fprintf(stderr, "Erro ao construir pacote\n");
+    printf("\nMandando move\n");
+    rede_envia(&pacote, soq);
 }

@@ -54,11 +54,7 @@ int main(int argc, char *argv[])
         do
         {
             fprintf(stderr, "\nEsperando movimento\n");
-            char move = movimento();
-            if (constroi_pacote(&pacote, sizeof(move), TIPO_DADOS, (uint8_t *)&move))
-                fprintf(stderr, "Erro ao construir pacote\n");
-            printf("\nMandando move\n");
-            rede_envia(&pacote, soq);
+            enviar_movimento(&pacote, soq);
             printf("\nEscutando resposta\n");
             rede_escuta(&pacote, soq);
 

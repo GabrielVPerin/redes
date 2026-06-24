@@ -6,6 +6,6 @@ char movimento();
 void reset_terminal();
 void init_terminal();
 void abrir_midia(const char *nome_arquivo);
-
+void enviar_movimento(struct pacote *pacote, int soq);
 
 #endif
