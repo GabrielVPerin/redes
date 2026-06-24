@@ -1,7 +1,7 @@
 #ifndef __CLIENT__
 #define __CLIENT__
 
-void desenharVisao();
+void recebe_visao(int soq, int lado);
 char movimento();
 void reset_terminal();
 void init_terminal();

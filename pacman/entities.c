@@ -14,28 +14,31 @@ static void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_
     } while (mapa[*y][*x] != '0');
 }
 
+extern int qtdArquivosVivos;
+
 void enviaConteudo(char tipo, int soq)
 {
+    qtdArquivosVivos--;
     switch (tipo)
     {
     case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
         envia_txt("1.txt", soq);
         break;
-    case '2':
-        envia_txt("2.txt", soq);
-        break;
-    case '3':
-        envia_jpg("3.jpg", soq);
-        break;
-    case '4':
-        envia_jpg("4.jpg", soq);
-        break;
-    case '5':
-        envia_mp4("5.mp4", soq);
-        break;
-    case '6':
-        envia_mp4("6.mp4", soq);
-        break;
+        // envia_txt("2.txt", soq);
+        // break;
+        // envia_jpg("3.jpg", soq);
+        // break;
+        // envia_jpg("4.jpg", soq);
+        // break;
+        // envia_mp4("5.mp4", soq);
+        // break;
+        // envia_mp4("6.mp4", soq);
+        // break;
     case 'R':
     case 'G':
     case 'B':
@@ -207,13 +210,13 @@ struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE])
 
 int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, int soq, struct pacote *pacote)
 {
-    // colisão com item especial
+    // colisão com fantasma
     if (mapa[p->y][p->x] != 'P')
     {
-        fprintf(stderr, "Colidiu com: %c\n", mapa[p->y][p->x]);
+        fprintf(stderr, "FIM com: %c\n", mapa[p->y][p->x]);
 
         // envia pacote de aviso
-        if (constroi_pacote(pacote, sizeof(char), TIPO_TXT, (uint8_t *)&mapa[p->y][p->x]) == 0)
+        if (constroi_pacote(pacote, sizeof(char), TIPO_FIM, (uint8_t *)&mapa[p->y][p->x]) == 0)
             rede_envia(pacote, soq);
 
         // envia conteúdo separado
@@ -244,7 +247,25 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, in
 
     if (dest == 'X')
         return -1;
+    if (dest != '0')
+    {
+        fprintf(stderr, "Colidiu com: %c\n", dest);
 
+        if (dest > '6' || dest < '1')
+        {
+            if (constroi_pacote(pacote, sizeof(char), TIPO_FIM, (uint8_t *)&mapa[p->y][p->x]) == 0)
+                rede_envia(pacote, soq);
+        }
+        // envia pacote de aviso
+        else
+        {
+            if (constroi_pacote(pacote, sizeof(char), TIPO_TXT, (uint8_t *)&dest) == 0)
+                rede_envia(pacote, soq);
+        }
+
+        // envia conteúdo separado
+        enviaConteudo(dest, soq);
+    }
     // movimentação
     mapa[p->y][p->x] = '0';
     *p = aux;

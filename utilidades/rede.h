@@ -13,4 +13,6 @@ void rede_envia(struct pacote *pacote, int soquete);
 // IMPORTANTE: A função espera que a sequencia do pacote recebido seja a sequencia do pacote anterior + 1 mod 64
 void rede_escuta(struct pacote *pacote, int soquete);
 
+void envia_visao(char **mapView, int lado, int soquete);
+
 #endif

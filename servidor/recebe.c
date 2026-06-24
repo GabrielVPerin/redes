@@ -5,24 +5,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-
 #include <protocolo.h>
 #include <rede.h>
 #include <arquivo.h>
-
 #include <entities.h>
 #include <map.h>
+
+int qtdArquivosVivos = 6;
 
 int main(int argc, char *argv[])
 {
     int soq = cria_raw_socket("lo");
     struct pacote pacote;
     rede_escuta(&pacote, soq);
+
     if (pacote.tipo != TIPO_INICIALIZACAO)
     {
         fprintf(stderr, "\nComunicação não iniciada\n");
         exit(1);
     }
+
     srand(time(NULL));
     char mapa[MAP_SIZE][MAP_SIZE];
 
@@ -33,13 +35,11 @@ int main(int argc, char *argv[])
 
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
-
     char move;
 
     while (1)
     {
         char **mapView = drawPacmanView(mapa, pacMan);
-
         for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
         {
             for (int j = 0; j < ((int)pacMan.visao * 2 + 1); j++)
@@ -63,13 +63,6 @@ int main(int argc, char *argv[])
             printf("\n");
         }
 
-        FILE *enviarCliente = fopen("pacotaoDoPerin.csv", "w");
-        if (!enviarCliente)
-        {
-            fprintf(stderr, "Erro ao abrir arquivo\n");
-            return 1;
-        }
-
         for (int i = 0; i < (int)pacMan.visao * 2 + 1; i++)
         {
             int flag = 0;
@@ -84,11 +77,18 @@ int main(int argc, char *argv[])
             if (flag)
                 fputc('\n', enviarCliente);
         }
-
         fclose(enviarCliente);
 
         fprintf(stderr, "Enviando mapa.csv\n");
-        envia_csv("pacotaoDoPerin.csv", soq);
+
+        int lado = (int)pacMan.visao * 2 + 1;
+        uint8_t lado_envio = (uint8_t)lado;
+
+        if (constroi_pacote(&pacote, sizeof(uint8_t), TIPO_VISUALIZACAO, &lado_envio))
+            fprintf(stderr, "Erro ao construir pacote");
+        rede_envia(&pacote, soq);
+
+        envia_visao(mapView, lado, soq);
 
         for (int i = 0; i < ((int)pacMan.visao * 2 + 1); i++)
             free(mapView[i]);
@@ -100,8 +100,24 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Esperando movimento\n");
             rede_escuta(&pacote, soq); // recebe movimento do cliente
             move = (char)pacote.dados[0];
-            moveP = movePacman(&pacMan, mapa, move, soq, &pacote);
+            fprintf(stderr, "\nVivos: %d\n", qtdArquivosVivos);
+            if (qtdArquivosVivos == 0)
+            {
 
+                fprintf(stderr, "FIM, acabou os arquivos\n");
+
+                // envia pacote de aviso
+                if (constroi_pacote(&pacote, sizeof(char), TIPO_FIM, NULL))
+                    fprintf(stderr, "Erro ao construir pacote");
+
+                rede_envia(&pacote, soq);
+                fprintf(stderr, "FIM, enviou\n");
+
+                envia_txt("fim.txt", soq); // fazer algo pra n ter isso aqui?
+                return 0;
+            }
+
+            moveP = movePacman(&pacMan, mapa, move, soq, &pacote);
             if (moveP == -1)
             {
                 fprintf(stderr, "Movimento Invalido\n");
@@ -118,7 +134,6 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "Mandando movimento correto\n");
                 rede_envia(&pacote, soq);
             }
-
         } while (moveP != 0); // 0 é quando o movimento é legal
 
         moveAllGhosts(mapa, &entities);

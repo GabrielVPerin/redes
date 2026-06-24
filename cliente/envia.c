@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/unistd.h>
-
 #include <protocolo.h>
 #include <rede.h>
 #include <arquivo.h>
@@ -15,7 +14,6 @@
 int main()
 {
     int soq = cria_raw_socket("lo");
-
     init_terminal();
     struct pacote pacote;
 
@@ -24,13 +22,13 @@ int main()
         fprintf(stderr, "Erro ao construir pacote\n");
     printf("\nMandando Start\n");
     rede_envia(&pacote, soq);
-    
+
     while (1)
     {
-
-        arquivo_recebe(soq);
+        rede_escuta(&pacote, soq); // Esperando tamanho do mapa
+        uint8_t lado = pacote.dados[0];
         fprintf(stderr, "\nDesenhando mapa\n");
-        desenharVisao();
+        recebe_visao(soq, lado);
 
         do
         {
@@ -38,29 +36,35 @@ int main()
             char move = movimento();
             if (constroi_pacote(&pacote, sizeof(move), TIPO_DADOS, (uint8_t *)&move))
                 fprintf(stderr, "Erro ao construir pacote\n");
-
             printf("\nMandando move\n");
             rede_envia(&pacote, soq);
             printf("\nEscutando resposta\n");
             rede_escuta(&pacote, soq);
 
-            if (pacote.tipo == TIPO_ERRO)
+            if (pacote.tipo != TIPO_ERRO)
             {
-                fprintf(stderr, "\nMovimento invalido! Tente novamente.\n");
-            }
-            else if (pacote.tipo == TIPO_TXT || pacote.tipo == TIPO_JPG || pacote.tipo == TIPO_MP4)
-            {
-                desenharVisao();
-                arquivo_recebe(soq);
+                printf("\nMovimento Válido! %d\n", pacote.tipo);
+                if (pacote.tipo == TIPO_FIM)
+                {
+                    fprintf(stderr, "\nEsperando arquivo fim\n");
+                    arquivo_recebe(soq);
+                    fprintf(stderr, "\nChegou fim\n");
+                    return 0;
+                }
+                else if (pacote.tipo == TIPO_TXT || pacote.tipo == TIPO_JPG || pacote.tipo == TIPO_MP4)
+                {
+                    fprintf(stderr, "\nEsperando arquivo especial\n");
+                    arquivo_recebe(soq);
+                    fprintf(stderr, "\nChegou especial\n");
+                    rede_escuta(&pacote, soq); // Escutando confirmação do movimento
+                }
             }
             else
-                printf("\nMovimento Válido!\n");
-
+                fprintf(stderr, "\nMovimento invalido! Tente novamente.\n");
         } while (pacote.tipo == TIPO_ERRO);
     }
 
     close(soq);
-
     reset_terminal();
     return EXIT_SUCCESS;
 }
