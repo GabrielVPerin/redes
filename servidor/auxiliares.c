@@ -46,13 +46,11 @@ void zerou_jogo(struct pacote *pacote, int soq)
     fprintf(stderr, "FIM, acabou os arquivos\n");
 
     // envia pacote de aviso
-    if (constroi_pacote(pacote, sizeof(char), TIPO_FIM, NULL))
+    if (constroi_pacote(pacote, sizeof(char), TIPO_FIM_DE_JOGO, NULL))
         fprintf(stderr, "Erro ao construir pacote");
 
     rede_envia(pacote, soq);
     fprintf(stderr, "FIM, enviou\n");
-
-    envia_txt("fim.txt", soq); // fazer algo pra n ter isso aqui?
 }
 
 void feedback_movimento(int moveP, struct pacote *pacote, int soq)

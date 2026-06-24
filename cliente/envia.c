@@ -38,9 +38,14 @@ int main(int argc, char *argv[])
             if (pacote.tipo != TIPO_ERRO)
             {
                 printf("\nMovimento Válido! %d\n", pacote.tipo);
+                if (pacote.tipo == TIPO_FIM_DE_JOGO)
+                {
+                    fprintf(stderr, "\nChegou fim arquivos\n");
+                    return 0;
+                }
                 if (pacote.tipo == TIPO_FIM)
                 {
-                    fprintf(stderr, "\nEsperando arquivo fim\n");
+                    fprintf(stderr, "\nEsperando arquivo fim fantasma\n");
                     arquivo_recebe(soq, NULL);
                     fprintf(stderr, "\nChegou fim\n");
                     return 0;

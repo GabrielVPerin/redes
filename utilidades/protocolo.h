@@ -35,6 +35,7 @@ enum tipos_pacote {
     TIPO_TXT            = 5,
     TIPO_JPG            = 6,
     TIPO_MP4            = 7,
+    TIPO_FIM_DE_JOGO    = 8,
     TIPO_DIREITA        = 10,
     TIPO_ESQUERDA       = 11,
     TIPO_CIMA           = 12,
