@@ -35,11 +35,6 @@ void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
     }
 }
 
-// void drawMap(char mapa[MAP_SIZE][MAP_SIZE], struct pacman p)
-// {
-//     printf("\n");
-
-// }
 
 void createMap(char mapa[MAP_SIZE][MAP_SIZE], char *filename)
 {
@@ -48,7 +43,10 @@ void createMap(char mapa[MAP_SIZE][MAP_SIZE], char *filename)
     if (!file)
         file = fopen("labirinto.csv", "r");
     if (!file)
+    {
+        fprintf(stderr,"Labirinto não encontrado\n");
         exit(1);
+    }
 
     for (int i = 0; i < MAP_SIZE; i++)
     {

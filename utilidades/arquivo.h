@@ -16,6 +16,8 @@ int envia_txt(char *nomeArquivo, int soquete);
 // Retorna 2 caso o nome do arquivo tenha mais que 63 caracteres
 int envia_jpg(char *nomeArquivo, int soquete);
 
+int envia_csv(char *nomeArquivo, int soquete);
+
 // Cria um arquivo com o nome enviado e escreve o conteúdo
 void arquivo_recebe(int soquete);
 

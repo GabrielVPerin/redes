@@ -76,3 +76,8 @@ int envia_jpg(char *nomeArquivo, int soquete)
 {
     return arquivo_envia(nomeArquivo, TIPO_JPG, soquete);
 }
+
+int envia_csv(char *nomeArquivo, int soquete)
+{
+    return arquivo_envia(nomeArquivo, TIPO_VISUALIZACAO, soquete);
+}

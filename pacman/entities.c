@@ -1,14 +1,51 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "entities.h"
 #include "terminal.h"
+#include <arquivo.h>
+#include <rede.h>
 
-void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_SIZE])
+static void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_SIZE])
 {
     do
     {
         *x = rand() % MAP_SIZE;
         *y = rand() % MAP_SIZE;
     } while (mapa[*y][*x] != '0');
+}
+
+void enviaConteudo(char tipo, int soq)
+{
+    switch (tipo)
+    {
+    case '1':
+        envia_txt("1.txt", soq);
+        break;
+    case '2':
+        envia_txt("2.txt", soq);
+        break;
+    case '3':
+        envia_jpg("3.jpg", soq);
+        break;
+    case '4':
+        envia_jpg("4.jpg", soq);
+        break;
+    case '5':
+        envia_mp4("5.mp4", soq);
+        break;
+    case '6':
+        envia_mp4("6.mp4", soq);
+        break;
+    case 'R':
+    case 'G':
+    case 'B':
+    case 'Y':
+        envia_jpg("morte.jpg", soq);
+        exit(1);
+        break;
+    default:
+        break;
+    }
 }
 
 struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE])
@@ -165,22 +202,22 @@ struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE])
     entidades.greenGhost.isFacing = 1;
     entidades.greenGhost.lastTurn = 1;
 
-    entidades.file1.filename = "1.txt";
-    entidades.file2.filename = "2.txt";
-    entidades.file3.filename = "3.jpg";
-    entidades.file4.filename = "4.jpg";
-    entidades.file5.filename = "5.mp4";
-    entidades.file6.filename = "6.mp4";
-
     return entidades;
 }
 
-int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao)
+int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, int soq, struct pacote *pacote)
 {
+    // colisão com item especial
     if (mapa[p->y][p->x] != 'P')
     {
-        reset_terminal();
-        exit(1);
+        fprintf(stderr, "Colidiu com: %c\n", mapa[p->y][p->x]);
+
+        // envia pacote de aviso
+        if (constroi_pacote(pacote, sizeof(char), TIPO_TXT, (uint8_t *)&mapa[p->y][p->x]) == 0)
+            rede_envia(pacote, soq);
+
+        // envia conteúdo separado
+        enviaConteudo(mapa[p->y][p->x], soq);
     }
 
     struct pacman aux = *p;
@@ -200,15 +237,21 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao)
         aux.x++;
         break;
     default:
-        break;
+        return -1;
     }
 
-    if (mapa[aux.y][aux.x] == 'X')
-        return 1;
+    char dest = mapa[aux.y][aux.x];
+
+    if (dest == 'X')
+        return -1;
+
+    // movimentação
     mapa[p->y][p->x] = '0';
     *p = aux;
     mapa[p->y][p->x] = 'P';
+
     p->passos++;
+
     if (p->passos % 5 == 0 && p->visao < 40)
         p->visao++;
 
@@ -290,7 +333,7 @@ int canMove(char mapa[MAP_SIZE][MAP_SIZE], int x, int y)
     if (x < 0 || x >= MAP_SIZE || y < 0 || y >= MAP_SIZE)
         return 0;
 
-    return mapa[y][x] == '0'; // && !(mapa[y][x] >= '1' && mapa[y][x] <= '6');
+    return mapa[y][x] == '0' || mapa[y][x] == 'P'; // && !(mapa[y][x] >= '1' && mapa[y][x] <= '6');
 }
 
 void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)

@@ -21,7 +21,6 @@ struct ghost
 }; 
 
 struct file{
-	char *filename;
 	unsigned int x;
 	unsigned int y;
 };
