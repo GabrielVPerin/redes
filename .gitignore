@@ -2,6 +2,8 @@ envia
 recebe
 
 *.txt
+*.jpg
+*.mp4
 
 # Prerequisites
 *.d

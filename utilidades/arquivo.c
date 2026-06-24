@@ -85,3 +85,33 @@ int envia_csv(char *nomeArquivo, int soquete)
 {
     return arquivo_envia(nomeArquivo, TIPO_VISUALIZACAO, soquete);
 }
+
+void envia_visao(char **mapView, int lado, int soquete)
+{
+    struct pacote pacote;
+    uint8_t buffer[31];
+    uint8_t pos = 0;
+    
+    for (int i = 0; i < lado; i++)
+    {
+        for (int j = 0; j < lado; j++)
+        {
+            buffer[pos++] = mapView[i][j];
+            if (pos == 31)
+            {
+                constroi_pacote(&pacote, pos, TIPO_VISUALIZACAO, buffer);
+                rede_envia(&pacote, soquete);
+                pos = 0;
+            }
+        }
+    }
+    
+    if (pos > 0)
+    {
+        constroi_pacote(&pacote, pos, TIPO_VISUALIZACAO, buffer);
+        rede_envia(&pacote, soquete);
+    }
+    
+    constroi_pacote(&pacote, 0, TIPO_FIM, NULL);
+    rede_envia(&pacote, soquete);
+}
