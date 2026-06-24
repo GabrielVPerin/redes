@@ -46,14 +46,16 @@ int main(int argc, char *argv[])
                 if (pacote.tipo == TIPO_FIM)
                 {
                     fprintf(stderr, "\nEsperando arquivo fim fantasma\n");
-                    arquivo_recebe(soq, NULL);
+                    char nomeArquivo[256];
+                    arquivo_recebe(soq, nomeArquivo);
+                    abrir_midia(nomeArquivo);
                     fprintf(stderr, "\nChegou fim\n");
                     return 0;
                 }
                 else if (pacote.tipo == TIPO_TXT || pacote.tipo == TIPO_JPG || pacote.tipo == TIPO_MP4)
                 {
                     fprintf(stderr, "\nEsperando arquivo especial\n");
-                    char nomeArquivo[256]; // Ilegal?
+                    char nomeArquivo[256];
                     arquivo_recebe(soq, nomeArquivo);
                     fprintf(stderr, "\nChegou especial\n");
                     abrir_midia(nomeArquivo);
