@@ -16,10 +16,9 @@ CLIENTE_OBJ = $(CLIENTE_SRC:.c=.o)
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 JOGO_OBJ = $(JOGO_SRC:.c=.o)
 
-CLIENTE_BIN = envia
-SERVER_BIN = recebe
+CLIENTE_BIN = cliente
+SERVER_BIN = servidor
 
-# Removed JOGO_BIN from the 'all' target
 all: $(CLIENTE_BIN) $(SERVER_BIN)
 
 $(CLIENTE_BIN): $(CLIENTE_OBJ) $(UTILS_OBJ)
@@ -27,8 +26,6 @@ $(CLIENTE_BIN): $(CLIENTE_OBJ) $(UTILS_OBJ)
 
 $(SERVER_BIN): $(SERVER_OBJ) $(UTILS_OBJ) $(JOGO_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
-
-# The standalone $(JOGO_BIN) target block has been deleted
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
