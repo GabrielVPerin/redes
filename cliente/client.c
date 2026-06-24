@@ -99,3 +99,17 @@ void init_terminal()
     newt.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 }
+
+void abrir_midia(const char *nome_arquivo) 
+{
+    char comando[256];
+    
+    // Monta o comando: xdg-open "nome_do_arquivo" > /dev/null 2>&1 &
+    // O '&' no final é CRUCIAL: ele faz o player abrir em background. 
+    // Se não colocar o '&', o seu cliente vai travar esperando você fechar o vídeo!
+    // O "> /dev/null 2>&1" impede que o player cuspa logs no seu terminal e suje o mapa.
+    snprintf(comando, sizeof(comando), "xdg-open \"%s\" > /dev/null 2>&1 &", nome_arquivo);
+    
+    // Executa o comando no terminal do Linux
+    system(comando);
+}

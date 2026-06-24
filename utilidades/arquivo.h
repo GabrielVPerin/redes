@@ -19,6 +19,6 @@ int envia_jpg(char *nomeArquivo, int soquete);
 int envia_csv(char *nomeArquivo, int soquete);
 
 // Cria um arquivo com o nome enviado e escreve o conteúdo
-void arquivo_recebe(int soquete);
+void arquivo_recebe(int soquete, char *filename);
 
 #endif

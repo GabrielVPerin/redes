@@ -22,23 +22,23 @@ void enviaConteudo(char tipo, int soq)
     switch (tipo)
     {
     case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
         envia_txt("1.txt", soq);
         break;
-        // envia_txt("2.txt", soq);
-        // break;
-        // envia_jpg("3.jpg", soq);
-        // break;
-        // envia_jpg("4.jpg", soq);
-        // break;
-        // envia_mp4("5.mp4", soq);
-        // break;
-        // envia_mp4("6.mp4", soq);
-        // break;
+    case '2':
+        envia_txt("2.txt", soq);
+        break;
+    case '3':
+        envia_jpg("3.jpg", soq);
+        break;
+    case '4':
+        envia_jpg("4.jpg", soq);
+        break;
+    case '5':
+        envia_mp4("5.mp4", soq);
+        break;
+    case '6':
+        envia_mp4("6.mp4", soq);
+        break;
     case 'R':
     case 'G':
     case 'B':

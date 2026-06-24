@@ -39,7 +39,7 @@ static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
 }
 
 // Cria um arquivo com o nome enviado e escreve o conteúdo
-void arquivo_recebe(int soquete)
+void arquivo_recebe(int soquete, char *filename)
 {
     struct pacote dados;
     rede_escuta(&dados, soquete);
@@ -51,6 +51,10 @@ void arquivo_recebe(int soquete)
         rede_escuta(&dados, soquete);
         fwrite(dados.dados, sizeof(uint8_t), dados.tamanho, arquivo);
     } while(dados.tipo != TIPO_FIM);
+
+    if(filename)
+        strcpy(filename,nomeArquivo);
+    fclose(arquivo);
 }
 
 // Envia arquivo MP4

@@ -41,7 +41,7 @@ int main()
         fprintf(stderr, "MAPA FORNECIDO: %s\n", nomeMapa);
 
         // receber o arquivo do mapa csv
-        arquivo_recebe(soq);
+        arquivo_recebe(soq, NULL); // da pra trocar o null por variavel com nome
         fprintf(stderr, "\nMapa chegou");
         createMap(mapa, nomeMapa);
         fprintf(stderr, "\nMapa criado");
