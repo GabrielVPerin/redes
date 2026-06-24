@@ -7,8 +7,13 @@
 #include <protocolo.h>
 #include <rede.h>
 
-void recebe_visao(int soq, int lado)
+void recebe_visao(int soq, struct pacote *pacoteOriginal)
 {
+    fprintf(stderr, "Ouvindo...\n");
+    rede_escuta(pacoteOriginal, soq); // Esperando tamanho do mapa (visão)
+    uint8_t lado = pacoteOriginal->dados[0];
+    fprintf(stderr, "\nDesenhando mapa\n");
+
     struct pacote pacote;
     int total = (lado * lado * 2) + 10;
     char *buffer = calloc(total, sizeof(char));
@@ -134,8 +139,39 @@ void enviar_movimento(struct pacote *pacote, int soq)
         break;
     }
 
-    if (constroi_pacote(&pacote, sizeof(move), tipo, (uint8_t *)&move))
+    if (constroi_pacote(pacote, sizeof(move), tipo, (uint8_t *)&move))
         fprintf(stderr, "Erro ao construir pacote\n");
     printf("\nMandando move\n");
-    rede_envia(&pacote, soq);
+    rede_envia(pacote, soq);
+}
+
+void inicia_programa(struct pacote *pacote, int soq)
+{
+    // Começando a executar
+    char start = movimento();
+    if (constroi_pacote(pacote, sizeof(start), TIPO_INICIALIZACAO, (uint8_t *)&start))
+        fprintf(stderr, "Erro ao construir pacote\n");
+    fprintf(stderr, "\nMandando Start\n");
+    rede_envia(pacote, soq);
+}
+
+void carregando_mapa(int argc, char *argv, struct pacote *pacote, int soq)
+{
+    // Enviando o mapa
+    if (argc > 1)
+    {
+        fprintf(stderr, "\nMapa: %s\n", argv);
+        int tam_string = strlen(argv) + 1;
+        if (constroi_pacote(pacote, tam_string, TIPO_TXT, (uint8_t *)argv))
+            fprintf(stderr, "Erro ao construir pacote\n");
+        rede_envia(pacote, soq);
+        envia_csv(argv, soq);
+        fprintf(stderr, "\nMandou o mapa\n");
+    }
+    else
+    {
+        if (constroi_pacote(pacote, 0, TIPO_ERRO, NULL))
+            fprintf(stderr, "Erro ao construir pacote\n");
+        rede_envia(pacote, soq);
+    }
 }

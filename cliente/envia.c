@@ -19,37 +19,14 @@ int main(int argc, char *argv[])
     struct pacote pacote;
 
     // Começando a executar
-    char start = movimento();
-    if (constroi_pacote(&pacote, sizeof(start), TIPO_INICIALIZACAO, (uint8_t *)&start))
-        fprintf(stderr, "Erro ao construir pacote\n");
-    fprintf(stderr, "\nMandando Start\n");
-    rede_envia(&pacote, soq);
+    inicia_programa(&pacote, soq);
 
     // Enviando o mapa
-    if (argc > 1)
-    {
-        fprintf(stderr, "\nMapa: %s\n", argv[1]);
-        int tam_string = strlen(argv[1]) + 1;
-        if (constroi_pacote(&pacote, tam_string, TIPO_TXT, (uint8_t *)argv[1]))
-            fprintf(stderr, "Erro ao construir pacote\n");
-        rede_envia(&pacote, soq);
-        envia_csv(argv[1], soq);
-        fprintf(stderr, "\nMandou o mapa\n");
-    }
-    else
-    {
-        if (constroi_pacote(&pacote, 0, TIPO_ERRO, NULL))
-            fprintf(stderr, "Erro ao construir pacote\n");
-        rede_envia(&pacote, soq);
-    }
+    carregando_mapa(argc, argv[1], &pacote, soq);
 
     while (1)
     {
-        fprintf(stderr, "Ouvindo...\n");
-        rede_escuta(&pacote, soq); // Esperando tamanho do mapa (visão)
-        uint8_t lado = pacote.dados[0];
-        fprintf(stderr, "\nDesenhando mapa\n");
-        recebe_visao(soq, lado);
+        recebe_visao(soq, &pacote);
 
         do
         {
