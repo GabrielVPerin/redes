@@ -105,10 +105,14 @@ static int escuta_resposta(int soquete, size_t timeoutMilis)
 
 static int byte_check(struct pacote_alternativo *pacote_alternativo ,struct pacote *pacote)
 {
-    if(pacote->tamanho > 8 && pacote->dados[8] == 0x81) { 
+    if(pacote->tamanho > 8 && (pacote->dados[8] == 0x81 || pacote->dados[8] == 0x88)) { 
         memcpy(pacote_alternativo, pacote, 13);
         pacote_alternativo->dados[9] = 0xFF;
         memcpy((uint8_t *) pacote_alternativo + 14, (uint8_t *) pacote + 13, sizeof(struct pacote_alternativo) - 14);
+        pacote->marcador = MARCADOR + 1;
+        pacote_alternativo->marcador = MARCADOR + 1;
+        pacote_alternativo->crc = calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1);
+        pacote->marcador = MARCADOR;
 
         return 1;
     }
@@ -211,12 +215,12 @@ void rede_escuta(struct pacote *pacote, int soquete)
                 perror("Erro ao usar recv");
                 exit(1);
             }
-        } while(buffer[0] != MARCADOR);
+        } while(buffer[0] != MARCADOR && buffer[0] != MARCADOR + 1);
 
         if(origem.sll_pkttype == PACKET_OUTGOING)
             continue;
 
-        if(ret == sizeof(struct pacote_alternativo)) {
+        if(buffer[0] == MARCADOR + 1) {
             memcpy(pacote, buffer, 13);
             memcpy((uint8_t *) pacote + 13, &buffer[14], ret - 14);
             printf("Entrou %d\n",ret );

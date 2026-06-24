@@ -13,7 +13,7 @@ void incrementa_sequencia()
     sequenciaGlobal = (sequenciaGlobal + 1) % (MAX_6BIT + 1);
 }
 
-static uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
+uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
     uint8_t crc = 0;
     uint8_t polinomio = 0x07;
 
