@@ -9,7 +9,7 @@ JOGO_DIR = pacman
 UTILS_SRC = $(wildcard $(UTILS_DIR)/*.c)
 CLIENTE_SRC = $(wildcard $(CLIENTE_DIR)/*.c)
 SERVER_SRC = $(wildcard $(SERVER_DIR)/*.c)
-JOGO_SRC = $(wildcard pacman/*.c)
+JOGO_SRC = $(wildcard $(JOGO_DIR)/*.c)
 
 UTILS_OBJ = $(UTILS_SRC:.c=.o)
 CLIENTE_OBJ = $(CLIENTE_SRC:.c=.o)
