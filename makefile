@@ -16,8 +16,8 @@ CLIENTE_OBJ = $(CLIENTE_SRC:.c=.o)
 SERVER_OBJ = $(SERVER_SRC:.c=.o)
 JOGO_OBJ = $(JOGO_SRC:.c=.o)
 
-CLIENTE_BIN = cliente
-SERVER_BIN = servidor
+CLIENTE_BIN = client
+SERVER_BIN = server
 
 all: $(CLIENTE_BIN) $(SERVER_BIN)
 

@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <protocolo.h>
 #include <types.h>
-
+#include <rede.h>
+#include <arquivo.h>
+#include <map.h>
+#include <entities.h>
 
 // recebe mapa (ou não) do cliente
 void recebe_mapa(char mapa[MAP_SIZE][MAP_SIZE], struct pacote *pacote, int soq);

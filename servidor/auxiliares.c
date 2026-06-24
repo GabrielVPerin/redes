@@ -1,5 +1,6 @@
 
-#include <auxiliares.h>
+#include "auxiliares.h"
+
 void recebe_mapa(char mapa[MAP_SIZE][MAP_SIZE], struct pacote *pacote, int soq)
 {
     rede_escuta(pacote, soq);

@@ -10,7 +10,7 @@
 #include <arquivo.h>
 #include <entities.h>
 #include <map.h>
-#include <auxiliares.h>
+#include "auxiliares.h"
 
 int qtdArquivosVivos = 6;
 
@@ -29,7 +29,7 @@ int main()
     srand(time(NULL));
     char mapa[MAP_SIZE][MAP_SIZE];
 
-    recebe_mapa(mapa, soq, &pacote);
+    recebe_mapa(mapa, &pacote, soq);
 
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
