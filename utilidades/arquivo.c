@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
 #include <protocolo.h>
 #include <rede.h>
 
@@ -28,7 +28,10 @@ static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
         return 2;
     FILE *arquivo = fopen(nomeArquivo, "rb");
     if(arquivo == NULL)
-        return 1;
+    {
+        fprintf(stderr, "Arquivo inexistente. Encerrando");
+        exit(1);
+    }
 
     struct pacote tipoArquivo;
     constroi_pacote(&tipoArquivo, strlen(nomeArquivo) + 1, tipoPacote, (uint8_t *) nomeArquivo);
@@ -46,7 +49,11 @@ void arquivo_recebe(int soquete, char *filename)
     char nomeArquivo[dados.tamanho];
     strcpy(nomeArquivo, (char *) dados.dados);
     FILE *arquivo = fopen(nomeArquivo, "wb");
-
+    if(arquivo == NULL)
+    {
+        fprintf(stderr,"Falha no recebimento. Encerrando\n");
+        exit(1);
+    }
     do {
         rede_escuta(&dados, soquete);
         fwrite(dados.dados, sizeof(uint8_t), dados.tamanho, arquivo);

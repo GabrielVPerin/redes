@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[])
 {
-    int soq = cria_raw_socket("lo");
+    int soq = cria_raw_socket("enp3s0");
     init_terminal();
     struct pacote pacote;
 
@@ -37,19 +37,23 @@ int main(int argc, char *argv[])
             if (pacote.tipo != TIPO_ERRO)
             {
                 if (pacote.tipo == TIPO_FIM_DE_JOGO) // Quando zera o jogo
+                {
+                    fprintf(stderr, "\nTodos os itens coletados, encerrando jogo.\n");
                     return 0;
+                }
 
                 if (pacote.tipo == TIPO_FIM) // Quando morre pra fantasma
                 {
                     char nomeArquivo[256];
                     recebe_visao(soq, &pacote);
+                    fprintf(stderr, "\nVocê morreu, encerrando jogo.\n");
                     arquivo_recebe(soq, nomeArquivo);
                     abrir_midia(nomeArquivo);
                     return 0;
                 }
                 else if (pacote.tipo == TIPO_TXT || pacote.tipo == TIPO_JPG || pacote.tipo == TIPO_MP4)
                 {
-                    fprintf(stderr, "\nEsperando arquivo especial\n");
+                    fprintf(stderr, "\nEsperando arquivo especial...\n");
                     char nomeArquivo[256];
                     arquivo_recebe(soq, nomeArquivo);
                     abrir_midia(nomeArquivo);

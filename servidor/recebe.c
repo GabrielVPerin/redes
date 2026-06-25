@@ -16,8 +16,9 @@ int qtdArquivosVivos = 6;
 
 int main()
 {
-    int soq = cria_raw_socket("lo");
+    int soq = cria_raw_socket("enp3s0");
     struct pacote pacote;
+    fprintf(stderr, "\nEsperando start do cliente...");
     rede_escuta(&pacote, soq);
 
     if (pacote.tipo != TIPO_INICIALIZACAO)
