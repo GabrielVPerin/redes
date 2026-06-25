@@ -29,7 +29,7 @@ static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
     FILE *arquivo = fopen(nomeArquivo, "rb");
     if(arquivo == NULL)
     {
-        fprintf(stderr, "Arquivo inexistente. Encerrando");
+        fprintf(stderr, "Arquivo inexistente. Encerrando\n");
         exit(1);
     }
 

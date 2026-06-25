@@ -18,20 +18,22 @@ int main()
 {
     int soq = cria_raw_socket("enp3s0");
     struct pacote pacote;
-    fprintf(stderr, "\nEsperando start do cliente...");
+    fprintf(stderr, "\nEsperando start do cliente...\n");
     rede_escuta(&pacote, soq);
 
     if (pacote.tipo != TIPO_INICIALIZACAO)
     {
-        fprintf(stderr, "\nComunicação não iniciada\n");
+        fprintf(stderr, "\nComunicação não iniciada. Encerrando.\n");
         exit(1);
     }
 
     srand(time(NULL));
     char mapa[MAP_SIZE][MAP_SIZE];
 
+    fprintf(stderr, "Gerando mapa\n");
     recebe_mapa(mapa, &pacote, soq);
 
+    fprintf(stderr,"Gerando entidades\n");
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
     char move;
@@ -49,6 +51,7 @@ int main()
             if (qtdArquivosVivos == 0)
             {
                 zerou_jogo(&pacote, soq);
+                fprintf(stderr,"Jogo zerado, finalizando\n");
                 return 0;
             }
 
@@ -57,6 +60,7 @@ int main()
 
         } while (movePossivel != 0); // 0 é quando o movimento é legal
 
+        fprintf(stderr, "Movendo fantasmas\n");
         moveAllGhosts(mapa, &entities);
 
         // envia mapa visível ao cliente

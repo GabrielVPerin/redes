@@ -14,8 +14,6 @@ static void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_
     } while (mapa[*y][*x] != '0');
 }
 
-
-
 extern int qtdArquivosVivos;
 
 void enviaConteudo(char tipo, int soq, char mapa[MAP_SIZE][MAP_SIZE], struct pacman p, struct pacote *pacote)
@@ -52,6 +50,8 @@ void enviaConteudo(char tipo, int soq, char mapa[MAP_SIZE][MAP_SIZE], struct pac
     default:
         break;
     }
+
+    fprintf(stderr, "Arquivo enviado\n");
 }
 
 struct entities spawnEntities(char mapa[MAP_SIZE][MAP_SIZE])
