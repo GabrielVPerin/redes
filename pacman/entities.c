@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "entities.h"
-#include "terminal.h"
 #include <arquivo.h>
 #include <rede.h>
 
