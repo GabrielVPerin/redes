@@ -54,7 +54,7 @@ int main()
                 fprintf(stderr,"Jogo zerado, finalizando\n");
                 return 0;
             }
-
+            fprintf(stderr,"Movimentando o player\n");
             movePossivel = movePacman(&pacMan, mapa, move, soq, &pacote);
             feedback_movimento(movePossivel, &pacote, soq);
 
