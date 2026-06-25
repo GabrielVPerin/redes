@@ -3,6 +3,7 @@
 #include "entities.h"
 #include <arquivo.h>
 #include <rede.h>
+#include "../servidor/auxiliares.h"
 
 static void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_SIZE])
 {
@@ -15,7 +16,7 @@ static void randSpawn(unsigned int *x, unsigned int *y, char mapa[MAP_SIZE][MAP_
 
 extern int qtdArquivosVivos;
 
-void enviaConteudo(char tipo, int soq)
+void enviaConteudo(char tipo, int soq, char mapa[MAP_SIZE][MAP_SIZE], struct pacman p, struct pacote *pacote)
 {
     qtdArquivosVivos--;
     switch (tipo)
@@ -42,6 +43,7 @@ void enviaConteudo(char tipo, int soq)
     case 'G':
     case 'B':
     case 'Y':
+        envia_mapa_visivel(mapa, p, pacote, soq);
         envia_jpg("morte.jpg", soq);
         exit(1);
         break;
@@ -212,14 +214,12 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, in
     // colisão com fantasma
     if (mapa[p->y][p->x] != 'P')
     {
-        fprintf(stderr, "FIM com: %c\n", mapa[p->y][p->x]);
-
         // envia pacote de aviso
         if (constroi_pacote(pacote, sizeof(char), TIPO_FIM, (uint8_t *)&mapa[p->y][p->x]) == 0)
             rede_envia(pacote, soq);
 
         // envia conteúdo separado
-        enviaConteudo(mapa[p->y][p->x], soq);
+        enviaConteudo(mapa[p->y][p->x], soq, mapa, *p, pacote);
     }
 
     struct pacman aux = *p;
@@ -248,10 +248,10 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, in
         return -1;
     if (dest != '0')
     {
-        fprintf(stderr, "Colidiu com: %c\n", dest);
-
         if (dest > '6' || dest < '1')
         {
+            mapa[p->y][p->x] = '0';
+
             if (constroi_pacote(pacote, sizeof(char), TIPO_FIM, (uint8_t *)&mapa[p->y][p->x]) == 0)
                 rede_envia(pacote, soq);
         }
@@ -263,7 +263,7 @@ int movePacman(struct pacman *p, char mapa[MAP_SIZE][MAP_SIZE], char direcao, in
         }
 
         // envia conteúdo separado
-        enviaConteudo(dest, soq);
+        enviaConteudo(dest, soq, mapa, *p, pacote);
     }
     // movimentação
     mapa[p->y][p->x] = '0';
@@ -297,7 +297,7 @@ int pacmanView(int x, int y, struct pacman p)
 
 // 1 up / -1 down / 2 left / -2 right
 
-int dx(int dir)
+static int dx(int dir)
 {
     if (dir == 2)
         return -1;
@@ -306,7 +306,7 @@ int dx(int dir)
     return 0;
 }
 
-int dy(int dir)
+static int dy(int dir)
 {
     if (dir == 1)
         return -1;
@@ -315,7 +315,7 @@ int dy(int dir)
     return 0;
 }
 
-int turnLeft(int dir)
+static int turnLeft(int dir)
 {
     if (dir == 1)
         return 2; // up -> left
@@ -329,7 +329,7 @@ int turnLeft(int dir)
     exit(1);
 }
 
-int turnRight(int dir)
+static int turnRight(int dir)
 {
     if (dir == 1)
         return -2;
@@ -343,12 +343,12 @@ int turnRight(int dir)
     exit(1);
 }
 
-int turnBack(int dir)
+static int turnBack(int dir)
 {
     return -dir;
 }
 
-int canMove(char mapa[MAP_SIZE][MAP_SIZE], int x, int y)
+static int canMove(char mapa[MAP_SIZE][MAP_SIZE], int x, int y)
 {
     if (x < 0 || x >= MAP_SIZE || y < 0 || y >= MAP_SIZE)
         return 0;
@@ -356,7 +356,7 @@ int canMove(char mapa[MAP_SIZE][MAP_SIZE], int x, int y)
     return mapa[y][x] == '0' || mapa[y][x] == 'P'; // && !(mapa[y][x] >= '1' && mapa[y][x] <= '6');
 }
 
-void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)
+static void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)
 {
     struct ghost old = *gR;
 
@@ -387,7 +387,7 @@ void moveRedGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gR)
     mapa[gR->y][gR->x] = 'R';
 }
 
-void moveBlueGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gB)
+static void moveBlueGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gB)
 {
     struct ghost old = *gB;
 
@@ -418,7 +418,7 @@ void moveBlueGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gB)
     mapa[gB->y][gB->x] = 'B';
 }
 
-void moveGreenGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gG)
+static void moveGreenGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gG)
 {
     struct ghost old = *gG;
 
@@ -464,7 +464,7 @@ void moveGreenGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gG)
     mapa[gG->y][gG->x] = 'G';
 }
 
-void moveYellowGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gY)
+static void moveYellowGhost(char mapa[MAP_SIZE][MAP_SIZE], struct ghost *gY)
 {
     struct ghost old = *gY;
 

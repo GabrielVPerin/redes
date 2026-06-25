@@ -34,22 +34,17 @@ int main()
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
     char move;
+    envia_mapa_visivel(mapa, pacMan, &pacote, soq);
 
     while (1)
     {
-        fprintf(stderr, "\n\n\n");
-
-        // envia mapa visível ao cliente
-        envia_mapa_visivel(mapa, pacMan, &pacote, soq);
 
         int movePossivel;
         do
         {
-            fprintf(stderr, "Esperando movimento\n");
             rede_escuta(&pacote, soq); // recebe movimento do cliente
             move = pacote.tipo;
-            fprintf(stderr, "\nVivos: %d\n", qtdArquivosVivos);
-            
+
             if (qtdArquivosVivos == 0)
             {
                 zerou_jogo(&pacote, soq);
@@ -62,6 +57,9 @@ int main()
         } while (movePossivel != 0); // 0 é quando o movimento é legal
 
         moveAllGhosts(mapa, &entities);
+
+        // envia mapa visível ao cliente
+        envia_mapa_visivel(mapa, pacMan, &pacote, soq);
     }
     return EXIT_SUCCESS;
 }

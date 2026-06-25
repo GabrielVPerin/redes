@@ -9,17 +9,15 @@
 
 void recebe_visao(int soq, struct pacote *pacoteOriginal)
 {
-    fprintf(stderr, "Ouvindo...\n");
-    rede_escuta(pacoteOriginal, soq); // Esperando tamanho do mapa (visão)
+    rede_escuta(pacoteOriginal, soq); // recebe tamanho do mapa (visão)
     uint8_t lado = pacoteOriginal->dados[0];
-    fprintf(stderr, "\nDesenhando mapa\n");
+    int area = lado * lado;
 
-    system("clear");
+    char *mapa = calloc(area, sizeof(char));
+    int count = 0;
     struct pacote pacote;
-    int total = (lado * lado * 2) + 10;
-    char *buffer = calloc(total, sizeof(char));
-    int pos = 0;
 
+    // descarta lixos (\n, \r, \0) enquanto escuta
     while (1)
     {
         rede_escuta(&pacote, soq);
@@ -28,59 +26,76 @@ void recebe_visao(int soq, struct pacote *pacoteOriginal)
 
         if (pacote.tipo == TIPO_VISUALIZACAO)
         {
-            int copy_len = pacote.tamanho;
-            if (pos + copy_len > total)
-                copy_len = total - pos;
-            memcpy(buffer + pos, pacote.dados, copy_len);
-            pos += copy_len;
-        }
-    }
-
-    int col = 0;
-    for (int i = 0; i < pos; i++)
-    {
-        char c = buffer[i];
-        if (c == '\n')
-        {
-            if (col != 0)
+            for (int i = 0; i < pacote.tamanho; i++)
             {
-                printf("\n");
-                col = 0;
+                char ch = pacote.dados[i];
+                if (ch != '\n' && ch != '\r' && ch != '\0' && count < area)
+                {
+                    mapa[count++] = ch;
+                }
             }
-            continue;
-        }
-
-        if (c == '\r' || c == '\0')
-            continue;
-
-        switch (c)
-        {
-        case 'X':
-            printf("# ");
-            break;
-        case 'E':
-        case '0':
-        case 'V':
-            printf("  ");
-            break;
-        default:
-            // imprime P, fantasmas e arquivos
-            printf("%c ", c);
-            break;
-        }
-        col++;
-
-        if (col == lado)
-        {
-            printf("\n");
-            col = 0;
         }
     }
 
-    if (col != 0)
-        printf("\n");
+    
+    int topo = 0; // começo
+    int fundo = lado - 1; // fim
 
-    free(buffer);
+    // acha a primeira linha que não é vazia
+    while (topo < lado)
+    {
+        int vazia = 1;
+        for (int j = 0; j < lado; j++)
+        {
+            char ch = mapa[topo * lado + j];
+            if (ch != 'E' && ch != '0' && ch != 'V' && ch != ' ')
+                vazia = 0;
+        }
+        if (!vazia)
+            break;
+        topo++;
+    }
+
+    // ultima linha que não é vazia
+    while (fundo >= topo)
+    {
+        int vazia = 1;
+        for (int j = 0; j < lado; j++)
+        {
+            char ch = mapa[fundo * lado + j];
+            if (ch != 'E' && ch != '0' && ch != 'V' && ch != ' ')
+                vazia = 0;
+        }
+        if (!vazia)
+            break;
+        fundo--;
+    }
+
+    // limpa a tela 
+    printf("\033[2J\033[H");
+
+    // imprime só as linhas com conteudo
+    if (topo <= fundo)
+    {
+        for (int i = topo; i <= fundo; i++)
+        {
+            for (int j = 0; j < lado; j++)
+            {
+                char ch = mapa[i * lado + j];
+
+                if (ch == 'X')
+                    printf("# ");
+                else if (ch == 'E' || ch == '0' || ch == 'V')
+                    printf("  ");
+                else
+                    printf("%c ", ch);
+            }
+            printf("\n");
+        }
+    }
+
+    fflush(stdout); // Força a atualização da tela
+    free(mapa);
 }
 
 char movimento()
@@ -139,7 +154,6 @@ void enviar_movimento(struct pacote *pacote, int soq)
 
     if (constroi_pacote(pacote, sizeof(move), tipo, (uint8_t *)&move))
         fprintf(stderr, "Erro ao construir pacote\n");
-    printf("\nMandando move\n");
     rede_envia(pacote, soq);
 }
 
@@ -149,7 +163,6 @@ void inicia_programa(struct pacote *pacote, int soq)
     char start = movimento();
     if (constroi_pacote(pacote, sizeof(start), TIPO_INICIALIZACAO, (uint8_t *)&start))
         fprintf(stderr, "Erro ao construir pacote\n");
-    fprintf(stderr, "\nMandando Start\n");
     rede_envia(pacote, soq);
 }
 
@@ -158,13 +171,11 @@ void carregando_mapa(int argc, char *argv, struct pacote *pacote, int soq)
     // Enviando o mapa
     if (argc > 1)
     {
-        fprintf(stderr, "\nMapa: %s\n", argv);
         int tam_string = strlen(argv) + 1;
         if (constroi_pacote(pacote, tam_string, TIPO_TXT, (uint8_t *)argv))
             fprintf(stderr, "Erro ao construir pacote\n");
         rede_envia(pacote, soq);
         envia_csv(argv, soq);
-        fprintf(stderr, "\nMandou o mapa\n");
     }
     else
     {

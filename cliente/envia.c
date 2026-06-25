@@ -18,38 +18,33 @@ int main(int argc, char *argv[])
     init_terminal();
     struct pacote pacote;
 
+    printf("\nPressione qualquer tecla para iniciar a comunicação\n");
     // Começando a executar
     inicia_programa(&pacote, soq);
 
     // Enviando o mapa
     carregando_mapa(argc, argv[1], &pacote, soq);
 
+    recebe_visao(soq, &pacote);
     while (1)
     {
-        recebe_visao(soq, &pacote);
 
         do
         {
-            fprintf(stderr, "\nEsperando movimento\n");
             enviar_movimento(&pacote, soq);
-            printf("\nEscutando resposta\n");
             rede_escuta(&pacote, soq);
 
             if (pacote.tipo != TIPO_ERRO)
             {
-                printf("\nMovimento Válido! %d\n", pacote.tipo);
-                if (pacote.tipo == TIPO_FIM_DE_JOGO)
-                {
-                    fprintf(stderr, "\nChegou fim arquivos\n");
+                if (pacote.tipo == TIPO_FIM_DE_JOGO) // Quando zera o jogo
                     return 0;
-                }
-                if (pacote.tipo == TIPO_FIM)
+
+                if (pacote.tipo == TIPO_FIM) // Quando morre pra fantasma
                 {
-                    fprintf(stderr, "\nEsperando arquivo fim fantasma\n");
                     char nomeArquivo[256];
+                    recebe_visao(soq, &pacote);
                     arquivo_recebe(soq, nomeArquivo);
                     abrir_midia(nomeArquivo);
-                    fprintf(stderr, "\nChegou fim\n");
                     return 0;
                 }
                 else if (pacote.tipo == TIPO_TXT || pacote.tipo == TIPO_JPG || pacote.tipo == TIPO_MP4)
@@ -57,14 +52,13 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "\nEsperando arquivo especial\n");
                     char nomeArquivo[256];
                     arquivo_recebe(soq, nomeArquivo);
-                    fprintf(stderr, "\nChegou especial\n");
                     abrir_midia(nomeArquivo);
                     rede_escuta(&pacote, soq); // Escutando confirmação do movimento
                 }
             }
-            else
-                fprintf(stderr, "\nMovimento invalido! Tente novamente.\n");
         } while (pacote.tipo == TIPO_ERRO);
+
+        recebe_visao(soq, &pacote);
     }
 
     close(soq);
