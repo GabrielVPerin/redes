@@ -148,8 +148,9 @@ void rede_envia(struct pacote *pacote, int soquete)
                 exit(1);
             }
         }
-
+        escreve_log(1, "via rede_envia", pacote->tipo);
         ret = escuta_resposta(soquete, timeoutMilis);
+        escreve_log(0, "via rede_envia", -1);
 
         switch(ret) {
             case 0:
@@ -185,6 +186,8 @@ static void rede_envia_mensagem(int soquete, uint8_t tipo)
         perror("Erro ao usar send");
         exit(1);
     }
+    escreve_log(1, "via rede_envia_mensagem", tipo);
+
 
 }
 

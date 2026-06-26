@@ -59,4 +59,6 @@ uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho);
 // Incrementa 1 na variável sequenciaGlobal
 void incrementa_sequencia();
 
+void escreve_log(int io, char *tipoEnvio, int tipoDado);
+
 #endif

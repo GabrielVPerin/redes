@@ -16,7 +16,12 @@ int qtdArquivosVivos = 6;
 
 int main()
 {
-    int soq = cria_raw_socket("enp3s0");
+    int soq = cria_raw_socket("lo");
+
+    fprintf(stderr, "\nLimpando arquivo log.log\n");
+    FILE *log = fopen("log.log", "w");
+    fclose(log);
+
     struct pacote pacote;
     fprintf(stderr, "\nEsperando start do cliente...\n");
     rede_escuta(&pacote, soq);
@@ -33,7 +38,7 @@ int main()
     fprintf(stderr, "Gerando mapa\n");
     recebe_mapa(mapa, &pacote, soq);
 
-    fprintf(stderr,"Gerando entidades\n");
+    fprintf(stderr, "Gerando entidades\n");
     struct entities entities = spawnEntities(mapa);
     struct pacman pacMan = entities.pacman;
     char move;
@@ -51,10 +56,10 @@ int main()
             if (qtdArquivosVivos == 0)
             {
                 zerou_jogo(&pacote, soq);
-                fprintf(stderr,"Jogo zerado, finalizando\n");
+                fprintf(stderr, "Jogo zerado, finalizando\n");
                 return 0;
             }
-            fprintf(stderr,"Movimentando o player\n");
+            fprintf(stderr, "Movimentando o player\n");
             movePossivel = movePacman(&pacMan, mapa, move, soq, &pacote);
             feedback_movimento(movePossivel, &pacote, soq);
 

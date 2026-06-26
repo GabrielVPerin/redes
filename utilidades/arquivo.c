@@ -11,32 +11,36 @@ static void envia_dados(FILE *arquivo, int soquete)
     uint8_t buffer[31];
     uint8_t tamBuffer = fread(buffer, sizeof(uint8_t), 31, arquivo);
 
-    while(tamBuffer > 0) {
+    while (tamBuffer > 0)
+    {
         constroi_pacote(&dados, tamBuffer, TIPO_DADOS, buffer);
         rede_envia(&dados, soquete);
+        escreve_log(1, "dados de arquivo", TIPO_DADOS);
         tamBuffer = fread(buffer, sizeof(uint8_t), 31, arquivo);
     }
 
     constroi_pacote(&dados, 0, TIPO_FIM, NULL);
     rede_envia(&dados, soquete);
+    escreve_log(1, "fim de arquivo", TIPO_FIM);
 }
 
 // Responsavel por mandar o pacote de tipo de arquivo
 static int arquivo_envia(char *nomeArquivo, int tipoPacote, int soquete)
 {
-    if(strlen(nomeArquivo) + 1 > MAX_6BIT)
+    if (strlen(nomeArquivo) + 1 > MAX_6BIT)
         return 2;
     FILE *arquivo = fopen(nomeArquivo, "rb");
-    if(arquivo == NULL)
+    if (arquivo == NULL)
     {
         fprintf(stderr, "Arquivo inexistente. Encerrando\n");
         exit(1);
     }
 
     struct pacote tipoArquivo;
-    constroi_pacote(&tipoArquivo, strlen(nomeArquivo) + 1, tipoPacote, (uint8_t *) nomeArquivo);
+    constroi_pacote(&tipoArquivo, strlen(nomeArquivo) + 1, tipoPacote, (uint8_t *)nomeArquivo);
     rede_envia(&tipoArquivo, soquete);
     envia_dados(arquivo, soquete);
+    escreve_log(1, "tipo de arquivo", tipoPacote);
 
     return 0;
 }
@@ -46,21 +50,24 @@ void arquivo_recebe(int soquete, char *filename)
 {
     struct pacote dados;
     rede_escuta(&dados, soquete);
+    escreve_log(0, "via arquivo_recebe", dados.tipo);
     char nomeArquivo[dados.tamanho];
-    strcpy(nomeArquivo, (char *) dados.dados);
+    strcpy(nomeArquivo, (char *)dados.dados);
     FILE *arquivo = fopen(nomeArquivo, "wb");
-    if(arquivo == NULL)
+    if (arquivo == NULL)
     {
-        fprintf(stderr,"Falha no recebimento. Encerrando\n");
+        fprintf(stderr, "Falha no recebimento. Encerrando\n");
         exit(1);
     }
-    do {
+    do
+    {
         rede_escuta(&dados, soquete);
+        escreve_log(0, "dados de arquivo", dados.tipo);
         fwrite(dados.dados, sizeof(uint8_t), dados.tamanho, arquivo);
-    } while(dados.tipo != TIPO_FIM);
+    } while (dados.tipo != TIPO_FIM);
 
-    if(filename)
-        strcpy(filename,nomeArquivo);
+    if (filename)
+        strcpy(filename, nomeArquivo);
     fclose(arquivo);
 }
 
@@ -98,7 +105,7 @@ void envia_visao(char **mapView, int lado, int soquete)
     struct pacote pacote;
     uint8_t buffer[31];
     uint8_t pos = 0;
-    
+
     for (int i = 0; i < lado; i++)
     {
         for (int j = 0; j < lado; j++)
@@ -108,17 +115,20 @@ void envia_visao(char **mapView, int lado, int soquete)
             {
                 constroi_pacote(&pacote, pos, TIPO_VISUALIZACAO, buffer);
                 rede_envia(&pacote, soquete);
+                escreve_log(1, "visualização", TIPO_VISUALIZACAO);
                 pos = 0;
             }
         }
     }
-    
+
     if (pos > 0)
     {
         constroi_pacote(&pacote, pos, TIPO_VISUALIZACAO, buffer);
         rede_envia(&pacote, soquete);
+        escreve_log(1, "visualização", TIPO_VISUALIZACAO);
     }
-    
+
     constroi_pacote(&pacote, 0, TIPO_FIM, NULL);
     rede_envia(&pacote, soquete);
+    escreve_log(1, "fim visualização", TIPO_FIM);
 }

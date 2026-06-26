@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[])
 {
-    int soq = cria_raw_socket("enp3s0");
+    int soq = cria_raw_socket("lo");
     init_terminal();
     struct pacote pacote;
 

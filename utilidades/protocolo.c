@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <memory.h>
-
+#include <stdio.h>
 #include <protocolo.h>
 
 // Devo usar bit mask?
@@ -13,23 +13,28 @@ void incrementa_sequencia()
     sequenciaGlobal = (sequenciaGlobal + 1) % (MAX_6BIT + 1);
 }
 
-uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
+uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho)
+{
     uint8_t crc = 0;
     uint8_t polinomio = 0x07;
 
-    for(size_t i = 0; i < tamanho; i++) {
+    for (size_t i = 0; i < tamanho; i++)
+    {
         crc ^= dados[i];
 
-        for(size_t j = 0; j < 8; j++) {
-            if(crc & 0x80) {
+        for (size_t j = 0; j < 8; j++)
+        {
+            if (crc & 0x80)
+            {
                 crc = (crc << 1) ^ polinomio;
-            } 
-            else {
+            }
+            else
+            {
                 crc <<= 1;
             }
         }
     }
-    
+
     return crc;
 }
 
@@ -37,9 +42,9 @@ uint8_t calcular_crc8(const uint8_t *dados, size_t tamanho) {
 // Retorna 1 caso algum argumento exceda o valor máximo definido pelo protocolo e 0 caso contrário
 int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t tipo, const uint8_t *dados)
 {
-    if(tamanho > MAX_5BIT)
+    if (tamanho > MAX_5BIT)
         return 1;
-    if(tipo > MAX_5BIT)
+    if (tipo > MAX_5BIT)
         return 1;
 
     memset(pacote, 0, sizeof(struct pacote));
@@ -48,7 +53,7 @@ int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t tipo, const 
     pacote->tamanho = tamanho;
     pacote->sequencia = sequenciaGlobal;
     pacote->tipo = tipo;
-    if(dados != NULL)
+    if (dados != NULL)
         memcpy(pacote->dados, dados, tamanho);
     pacote->crc = calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1);
 
@@ -59,8 +64,25 @@ int constroi_pacote(struct pacote *pacote, uint8_t tamanho, uint8_t tipo, const 
 // Retorna 1 se forem diferentes
 int compara_crc(struct pacote *pacote)
 {
-    if(calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1) != pacote->crc)
+    if (calcular_crc8((uint8_t *)pacote, sizeof(struct pacote) - 1) != pacote->crc)
         return 1;
 
     return 0;
+}
+
+void escreve_log(int io, char *tipoEnvio, int tipoDado)
+{
+    FILE *file = fopen("log.log", "a");
+    if (!file)
+    {
+        fprintf(stderr, "Problema ao abrir o log\n");
+        return;
+    }
+
+    if (io) // envio
+        fprintf(file, "Enviado %s dado do tipo %d\n", tipoEnvio, tipoDado);
+    else
+        fprintf(file, "Recebido %s dado do tipo %d\n", tipoEnvio, tipoDado);
+
+    fclose(file);
 }
